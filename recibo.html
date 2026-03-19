@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recibo de Doação - SBE</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .recibo-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border: 3px solid #4a90e2;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .recibo-header {
+            background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .recibo-header h1 {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .recibo-header .subtitulo {
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .recibo-header .info-legal {
+            font-size: 0.75em;
+            margin-top: 10px;
+            opacity: 0.9;
+            line-height: 1.4;
+        }
+
+        .recibo-content {
+            padding: 40px;
+        }
+
+        .recibo-numero-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #e3f2fd;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 5px solid #4a90e2;
+        }
+
+        .recibo-numero {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #4a90e2;
+        }
+
+        .recibo-valor-box {
+            text-align: right;
+        }
+
+        .recibo-valor-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .recibo-valor {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #2e7d32;
+        }
+
+        .recibo-field {
+            margin-bottom: 25px;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+
+        .recibo-field-label {
+            font-size: 0.85em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        .recibo-field-value {
+            font-size: 1.1em;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .recibo-referente {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 3px solid #4a90e2;
+        }
+
+        .recibo-footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: end;
+        }
+
+        .recibo-local-data {
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        .recibo-info-contato {
+            background: #f5f9ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+            text-align: center;
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .recibo-info-contato strong {
+            color: #4a90e2;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .btn-imprimir {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 15px 30px;
+            background: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.4);
+            transition: all 0.3s;
+        }
+
+        .btn-imprimir:hover {
+            background: #357abd;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 144, 226, 0.5);
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .btn-imprimir {
+                display: none;
+            }
+
+            .recibo-container {
+                border: 2px solid #333;
+                box-shadow: none;
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .recibo-content {
+                padding: 20px;
+            }
+
+            .recibo-numero-box {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .recibo-footer {
+                flex-direction: column;
+                gap: 15px;
+                align-items: start;
+            }
+
+            .btn-imprimir {
+                bottom: 15px;
+                right: 15px;
+                padding: 12px 20px;
+                font-size: 1em;
+            }
+        }
+
+        .tipo-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .tipo-valor {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+
+        .tipo-pix {
+            background: #b3e5fc;
+            color: #01579b;
+        }
+
+        .tipo-cesta {
+            background: #ffe0b2;
+            color: #e65100;
+        }
+    </style>
+</head>
+<body>
+    <div class="recibo-container">
+        <div class="recibo-header">
+            <h1>SOCIEDADE BENEFICENTE EVANGÉLICA</h1>
+            <div class="subtitulo">Recibo de Doação - IEAD Coophamil</div>
+            <div class="info-legal">
+                RECONHECIDA DE UTILIDADE PÚBLICA FEDERAL<br>
+                REGISTRO NO CNIS Nº 224.910/78<br>
+                LEI MUNICIPAL Nº 1525 - LEI ESTADUAL Nº 1379
+            </div>
+        </div>
+
+        <div class="recibo-content">
+            <div class="recibo-numero-box">
+                <div>
+                    <div class="recibo-numero">RECIBO Nº <span id="numeroRecibo">-</span></div>
+                </div>
+                <div class="recibo-valor-box">
+                    <div class="recibo-valor-label">VALOR R$:</div>
+                    <div class="recibo-valor" id="valorRecibo">-</div>
+                </div>
+            </div>
+
+            <div class="recibo-field">
+                <div class="recibo-field-label">Recebemos de:</div>
+                <div class="recibo-field-value" id="doadorNome">-</div>
+            </div>
+
+            <div class="recibo-field">
+                <div class="recibo-field-label">A importância de:</div>
+                <div class="recibo-field-value" id="valorExtenso">-</div>
+            </div>
+
+            <div class="recibo-referente" id="referenteBox" style="display: none;">
+                <div class="recibo-field-label">Referente a:</div>
+                <div class="recibo-field-value" id="referenteA">-</div>
+            </div>
+
+            <div class="recibo-footer">
+                <div class="recibo-local-data">
+                    <strong>Cuiabá - MT,</strong> <span id="dataRecibo">-</span>
+                </div>
+                <div style="text-align: center;">
+                    <div style="border-top: 1px solid #333; padding-top: 5px; min-width: 200px;">
+                        Assinatura
+                    </div>
+                </div>
+            </div>
+
+            <div class="recibo-info-contato">
+                <strong>SOCIEDADE BENEFICENTE EVANGÉLICA</strong>
+                Av. dos Expedicionários, 65 - CPA 4 - I Etapa - Cuiabá - MT<br>
+                📞 (65) 99200-3755 | (65) 99957-0141 | (65) 3644-2768<br>
+                📧 sbecuiaba.com.br | @sbe_mt
+            </div>
+        </div>
+    </div>
+
+    <button class="btn-imprimir" onclick="window.print()">
+        🖨️ Imprimir / Salvar PDF
+    </button>
+
+    <script>
+        // Obter parâmetros da URL
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        const numeroRecibo = urlParams.get('numero') || '-';
+        const doador = urlParams.get('doador') || '-';
+        const tipo = urlParams.get('tipo') || 'valor';
+        const valor = urlParams.get('valor') || '';
+        const quantidade = urlParams.get('quantidade') || '1';
+        const referente = urlParams.get('referente') || '';
+        const dataISO = urlParams.get('data') || new Date().toISOString();
+
+        // Preencher recibo
+        document.getElementById('numeroRecibo').textContent = numeroRecibo;
+        document.getElementById('doadorNome').textContent = doador;
+
+        // Formatar data
+        const data = new Date(dataISO);
+        const dataFormatada = data.toLocaleDateString('pt-BR', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric'
+        });
+        document.getElementById('dataRecibo').textContent = dataFormatada;
+
+        // Configurar valor baseado no tipo
+        if (tipo === 'cesta_basica') {
+            const qtd = parseInt(quantidade);
+            document.getElementById('valorRecibo').textContent = `${qtd} Cesta${qtd > 1 ? 's' : ''}`;
+            document.getElementById('valorExtenso').innerHTML = 
+                `<span class="tipo-badge tipo-cesta">🛒 Cesta Básica</span> ${qtd} unidade${qtd > 1 ? 's' : ''}`;
+        } else {
+            const valorNum = parseFloat(valor) || 0;
+            const valorFormatado = valorNum.toFixed(2).replace('.', ',');
+            document.getElementById('valorRecibo').textContent = valorFormatado;
+
+            // Converter valor para extenso
+            const valorExtenso = referente || numeroParaExtenso(valorNum);
+            const tipoBadge = tipo === 'pix' ? 
+                '<span class="tipo-badge tipo-pix">📱 PIX</span>' : 
+                '<span class="tipo-badge tipo-valor">💵 Dinheiro</span>';
+            
+            document.getElementById('valorExtenso').innerHTML = tipoBadge + ' ' + valorExtenso;
+        }
+
+        // Mostrar referente se existir
+        if (referente && tipo !== 'cesta_basica') {
+            document.getElementById('referenteBox').style.display = 'block';
+            document.getElementById('referenteA').textContent = referente;
+        }
+
+        // Função para converter número para extenso (simplificada)
+        function numeroParaExtenso(num) {
+            if (!num || num === 0) return 'zero reais';
+            
+            const unidades = ['', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove'];
+            const dezenas = ['', '', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa'];
+            const dez_vinte = ['dez', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove'];
+            const centenas = ['', 'cento', 'duzentos', 'trezentos', 'quatrocentos', 'quinhentos', 'seiscentos', 'setecentos', 'oitocentos', 'novecentos'];
+
+            const partes = num.toFixed(2).split('.');
+            const reais = parseInt(partes[0]);
+            const centavos = parseInt(partes[1]);
+
+            let extenso = '';
+
+            // Reais
+            if (reais === 0) {
+                extenso = 'zero reais';
+            } else if (reais < 10) {
+                extenso = unidades[reais] + ' ' + (reais === 1 ? 'real' : 'reais');
+            } else if (reais < 20) {
+                extenso = dez_vinte[reais - 10] + ' reais';
+            } else if (reais < 100) {
+                const d = Math.floor(reais / 10);
+                const u = reais % 10;
+                extenso = dezenas[d];
+                if (u > 0) extenso += ' e ' + unidades[u];
+                extenso += ' reais';
+            } else if (reais < 1000) {
+                const c = Math.floor(reais / 100);
+                const resto = reais % 100;
+                extenso = (reais === 100 ? 'cem' : centenas[c]);
+                if (resto > 0) {
+                    if (resto < 10) {
+                        extenso += ' e ' + unidades[resto];
+                    } else if (resto < 20) {
+                        extenso += ' e ' + dez_vinte[resto - 10];
+                    } else {
+                        const d = Math.floor(resto / 10);
+                        const u = resto % 10;
+                        extenso += ' e ' + dezenas[d];
+                        if (u > 0) extenso += ' e ' + unidades[u];
+                    }
+                }
+                extenso += ' reais';
+            } else {
+                // Para valores maiores, retornar apenas o valor numérico
+                extenso = reais.toLocaleString('pt-BR') + ' reais';
+            }
+
+            // Centavos
+            if (centavos > 0) {
+                extenso += ' e ' + centavos + ' centavos';
+            }
+
+            return extenso.charAt(0).toUpperCase() + extenso.slice(1);
+        }
+
+        // Atualizar título da página
+        document.title = `Recibo ${numeroRecibo} - SBE`;
+    </script>
+</body>
+</html>
