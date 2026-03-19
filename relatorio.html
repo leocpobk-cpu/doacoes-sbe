@@ -8,6 +8,9 @@
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
+    <!-- jsPDF para gerar PDFs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -203,6 +206,66 @@
             color: #666;
             font-size: 1.1em;
         }
+
+        .filtro-mes {
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filtro-mes label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .filtro-mes select {
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        .btn-pdf {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #e53935 0%, #c62828 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1em;
+            box-shadow: 0 4px 15px rgba(229, 57, 53, 0.3);
+            transition: all 0.3s;
+        }
+
+        .btn-pdf:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(229, 57, 53, 0.4);
+        }
+
+        .btn-pdf:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        @media (max-width: 768px) {
+            .filtro-mes {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filtro-mes select,
+            .btn-pdf {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -214,6 +277,20 @@
 
         <div class="content">
             <a href="index.html" class="btn-voltar">← Voltar para Registro</a>
+
+            <!-- Filtro de Mês e Geração de PDF -->
+            <div class="filtro-mes">
+                <label for="mesSelect">📅 Selecionar Mês:</label>
+                <select id="mesSelect" onchange="atualizarRelatorioMes()">
+                    <option value="">Todos os Meses</option>
+                </select>
+                <select id="anoSelect" onchange="atualizarRelatorioMes()">
+                    <option value="">Selecione o Ano</option>
+                </select>
+                <button class="btn-pdf" id="btnGerarPDF" onclick="gerarPDF()" disabled>
+                    📄 Gerar PDF do Mês
+                </button>
+            </div>
 
             <!-- Cards de Estatísticas -->
             <div class="cards-container">
@@ -346,7 +423,246 @@
             });
         }
 
+        // Preencher seletores de mês e ano
+        function preencherSeletores() {
+            const mesSelect = document.getElementById('mesSelect');
+            const anoSelect = document.getElementById('anoSelect');
+
+            // Preencher meses
+            const meses = [
+                'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+            ];
+
+            meses.forEach((mes, index) => {
+                const option = document.createElement('option');
+                option.value = index + 1;
+                option.textContent = mes;
+                mesSelect.appendChild(option);
+            });
+
+            // Preencher anos (últimos 5 anos)
+            const anoAtual = new Date().getFullYear();
+            for (let ano = anoAtual; ano >= anoAtual - 4; ano--) {
+                const option = document.createElement('option');
+                option.value = ano;
+                option.textContent = ano;
+                anoSelect.appendChild(option);
+            }
+
+            // Selecionar mês e ano atual
+            const mesAtual = new Date().getMonth() + 1;
+            mesSelect.value = mesAtual;
+            anoSelect.value = anoAtual;
+        }
+
+        function atualizarRelatorioMes() {
+            const mes = document.getElementById('mesSelect').value;
+            const ano = document.getElementById('anoSelect').value;
+            const btnPDF = document.getElementById('btnGerarPDF');
+
+            if (mes && ano) {
+                btnPDF.disabled = false;
+                btnPDF.textContent = `📄 Gerar PDF - ${getNomeMes(mes)}/${ano}`;
+            } else {
+                btnPDF.disabled = true;
+                btnPDF.textContent = '📄 Gerar PDF do Mês';
+            }
+        }
+
+        function getNomeMes(mes) {
+            const meses = [
+                'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+            ];
+            return meses[parseInt(mes) - 1];
+        }
+
+        async function gerarPDF() {
+            const mes = parseInt(document.getElementById('mesSelect').value);
+            const ano = parseInt(document.getElementById('anoSelect').value);
+
+            if (!mes || !ano) {
+                alert('⚠️ Selecione o mês e ano para gerar o relatório!');
+                return;
+            }
+
+            // Filtrar doações do mês
+            const doacoesMes = doacoes.filter(d => d.mes === mes && d.ano === ano);
+
+            if (doacoesMes.length === 0) {
+                alert('⚠️ Não há doações registradas neste mês!');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Verificar se o mês está fechado ou em curso
+            const dataAtual = new Date();
+            const mesAtual = dataAtual.getMonth() + 1;
+            const anoAtual = dataAtual.getFullYear();
+            const mesFechado = (ano < anoAtual) || (ano === anoAtual && mes < mesAtual);
+
+            // Cabeçalho
+            doc.setFontSize(18);
+            doc.setFont(undefined, 'bold');
+            doc.text('Relatório de Doações - SBE', 105, 15, { align: 'center' });
+
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'normal');
+            doc.text('Sociedade Beneficente Evangélica', 105, 22, { align: 'center' });
+            doc.text('IEAD Coophamil', 105, 28, { align: 'center' });
+
+            // Status do mês
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            let statusTexto = mesFechado 
+                ? `Relatório mês fechado ${String(mes).padStart(2, '0')}/${ano}`
+                : `Mês em curso - relatório gerado em ${dataAtual.toLocaleDateString('pt-BR')}`;
+            doc.text(statusTexto, 105, 38, { align: 'center' });
+
+            // Data de geração
+            doc.setFontSize(9);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Gerado em: ${dataAtual.toLocaleDateString('pt-BR')} às ${dataAtual.toLocaleTimeString('pt-BR')}`, 105, 44, { align: 'center' });
+
+            // Linha separadora
+            doc.setLineWidth(0.5);
+            doc.line(15, 48, 195, 48);
+
+            let yPos = 55;
+
+            // Separar doações por tipo
+            const doacoesDinheiro = doacoesMes.filter(d => d.tipo_doacao === 'valor' || d.tipo_doacao === 'pix');
+            const doacoesCestas = doacoesMes.filter(d => d.tipo_doacao === 'cesta_basica');
+
+            // Totalizadores
+            const totalDinheiro = doacoesDinheiro.reduce((sum, d) => sum + (parseFloat(d.valor) || 0), 0);
+            const totalCestas = doacoesCestas.reduce((sum, d) => sum + (parseInt(d.quantidade) || 0), 0);
+
+            // Seção: Doações em Dinheiro/PIX
+            if (doacoesDinheiro.length > 0) {
+                doc.setFontSize(13);
+                doc.setFont(undefined, 'bold');
+                doc.text('💰 Doações em Dinheiro e PIX', 15, yPos);
+                yPos += 8;
+
+                doc.setFontSize(9);
+                doc.setFont(undefined, 'normal');
+
+                doacoesDinheiro.forEach((doacao, index) => {
+                    if (yPos > 270) { // Nova página
+                        doc.addPage();
+                        yPos = 20;
+                    }
+
+                    const tipoLabel = doacao.tipo_doacao === 'pix' ? 'PIX' : 'Dinheiro';
+                    const valor = `R$ ${parseFloat(doacao.valor || 0).toFixed(2).replace('.', ',')}`;
+
+                    doc.text(`${index + 1}. ${doacao.doador_nome}`, 18, yPos);
+                    doc.text(`${tipoLabel} - ${valor}`, 130, yPos);
+                    yPos += 5;
+
+                    if (doacao.referente_a) {
+                        doc.setFont(undefined, 'italic');
+                        doc.text(`   Ref: ${doacao.referente_a}`, 20, yPos);
+                        doc.setFont(undefined, 'normal');
+                        yPos += 5;
+                    }
+                });
+
+                yPos += 3;
+                doc.setFont(undefined, 'bold');
+                doc.text(`Total em Dinheiro/PIX: R$ ${totalDinheiro.toFixed(2).replace('.', ',')}`, 18, yPos);
+                doc.setFont(undefined, 'normal');
+                yPos += 10;
+            }
+
+            // Seção: Cestas Básicas
+            if (doacoesCestas.length > 0) {
+                if (yPos > 250) { // Nova página
+                    doc.addPage();
+                    yPos = 20;
+                }
+
+                doc.setFontSize(13);
+                doc.setFont(undefined, 'bold');
+                doc.text('🧺 Doações de Cestas Básicas', 15, yPos);
+                yPos += 8;
+
+                doc.setFontSize(9);
+                doc.setFont(undefined, 'normal');
+
+                doacoesCestas.forEach((doacao, index) => {
+                    if (yPos > 270) {
+                        doc.addPage();
+                        yPos = 20;
+                    }
+
+                    const quantidade = `${doacao.quantidade} cesta${doacao.quantidade > 1 ? 's' : ''}`;
+
+                    doc.text(`${index + 1}. ${doacao.doador_nome}`, 18, yPos);
+                    doc.text(quantidade, 130, yPos);
+                    yPos += 5;
+
+                    if (doacao.observacao) {
+                        doc.setFont(undefined, 'italic');
+                        const obs = doacao.observacao.substring(0, 60); // Limitar tamanho
+                        doc.text(`   ${obs}`, 20, yPos);
+                        doc.setFont(undefined, 'normal');
+                        yPos += 5;
+                    }
+                });
+
+                yPos += 3;
+                doc.setFont(undefined, 'bold');
+                doc.text(`Total de Cestas: ${totalCestas}`, 18, yPos);
+                doc.setFont(undefined, 'normal');
+                yPos += 10;
+            }
+
+            // Resumo Final
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+
+            doc.setLineWidth(0.5);
+            doc.line(15, yPos, 195, yPos);
+            yPos += 7;
+
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text('📊 RESUMO GERAL', 15, yPos);
+            yPos += 7;
+
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Total de doações registradas: ${doacoesMes.length}`, 18, yPos);
+            yPos += 6;
+            doc.text(`Total arrecadado em dinheiro: R$ ${totalDinheiro.toFixed(2).replace('.', ',')}`, 18, yPos);
+            yPos += 6;
+            doc.text(`Total de cestas básicas: ${totalCestas}`, 18, yPos);
+
+            // Rodapé
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setFont(undefined, 'italic');
+                doc.text(`Página ${i} de ${pageCount}`, 195, 290, { align: 'right' });
+                doc.text('IEAD Coophamil - Sistema de Doações SBE', 105, 290, { align: 'center' });
+            }
+
+            // Salvar PDF
+            const nomeMes = getNomeMes(mes);
+            const nomeArquivo = `doacoes_sbe_${nomeMes}_${ano}.pdf`;
+            doc.save(nomeArquivo);
+        }
+
         // Inicializar
+        preencherSeletores();
         carregarDoacoes();
     </script>
 </body>
