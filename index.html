@@ -488,11 +488,30 @@
         <div class="content">
             <div id="mensagem" style="display: none;"></div>
 
-            <!-- Link para Relatórios -->
+            <!-- Botão Admin -->
             <div style="text-align: center; margin: 20px 0;">
-                <a href="relatorio.html" style="display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">
-                    📊 Ver Relatório de Doações
-                </a>
+                <button onclick="toggleAdmin()" style="padding: 10px 20px; background: linear-gradient(135deg, #555 0%, #333 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                    🔐 Acesso Administrativo
+                </button>
+            </div>
+
+            <!-- Área Admin (oculta por padrão) -->
+            <div id="areaAdmin" style="display: none; text-align: center; margin: 20px 0; padding: 20px; background: #f0f0f0; border-radius: 8px;">
+                <div id="painelSenha">
+                    <p style="margin-bottom: 10px; font-weight: 600; color: #555;">Digite a senha de administrador:</p>
+                    <input type="password" id="senhaAdmin" placeholder="Digite a senha" style="padding: 10px; border: 2px solid #ddd; border-radius: 5px; width: 250px; margin-right: 10px;">
+                    <button onclick="verificarSenha()" style="padding: 10px 20px; background: #4a90e2; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">Entrar</button>
+                    <p id="erroSenha" style="color: red; margin-top: 10px; display: none;">❌ Senha incorreta!</p>
+                </div>
+                <div id="painelAdmin" style="display: none;">
+                    <p style="color: #4a90e2; font-weight: 600; margin-bottom: 15px;">✅ Modo Administrativo Ativado</p>
+                    <a href="relatorio.html" style="display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); margin-right: 10px;">
+                        📊 Ver Relatório Completo
+                    </a>
+                    <button onclick="deslogarAdmin()" style="padding: 12px 30px; background: #e53935; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                        🚪 Sair
+                    </button>
+                </div>
             </div>
 
             <div class="section">
@@ -807,9 +826,14 @@
                     ${doacao.referente_a ? `<div style="color: #666; margin: 5px 0;"><em>${doacao.referente_a}</em></div>` : ''}
                     ${doacao.observacao ? `<div style="color: #666; margin: 5px 0;">Obs: ${doacao.observacao}</div>` : ''}
                     ${doacao.imagem_comprovante ? `<div style="margin-top: 10px;"><img src="${doacao.imagem_comprovante}" style="max-width: 200px; border-radius: 5px; border: 1px solid #ddd;"></div>` : ''}
-                    <button class="btn-recibo" onclick="abrirRecibo('${doacao.numero_recibo}')">
-                        📄 Ver Recibo
-                    </button>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn-recibo" onclick="abrirRecibo('${doacao.numero_recibo}')">
+                            📄 Ver Recibo
+                        </button>
+                        ${adminLogado ? `<button class="btn-recibo" style="background: #e53935;" onclick="deletarDoacao('${doacao.id}', '${doacao.numero_recibo}')">
+                            🗑️ Deletar
+                        </button>` : ''}
+                    </div>
                 `;
 
                 listaDoacoes.appendChild(li);
@@ -967,6 +991,93 @@
             await carregarDoacoesSupabase();
             atualizarEstatisticas();
             renderizarDoacoes();
+        }
+
+        inicializar();
+
+        // Sistema de Admin
+        let adminLogado = false;
+        const SENHA_ADMIN = '0016275784390';
+
+        function toggleAdmin() {
+            const areaAdmin = document.getElementById('areaAdmin');
+            if (areaAdmin.style.display === 'none') {
+                areaAdmin.style.display = 'block';
+            } else {
+                areaAdmin.style.display = 'none';
+                document.getElementById('senhaAdmin').value = '';
+                document.getElementById('erroSenha').style.display = 'none';
+            }
+        }
+
+        function verificarSenha() {
+            const senha = document.getElementById('senhaAdmin').value;
+            if (senha === SENHA_ADMIN) {
+                adminLogado = true;
+                document.getElementById('painelSenha').style.display = 'none';
+                document.getElementById('painelAdmin').style.display = 'block';
+                document.getElementById('erroSenha').style.display = 'none';
+                renderizarDoacoes(); // Re-renderizar com botões de deletar
+                mostrarMensagem('✅ Acesso administrativo concedido!', 'success');
+            } else {
+                document.getElementById('erroSenha').style.display = 'block';
+            }
+        }
+
+        function deslogarAdmin() {
+            adminLogado = false;
+            document.getElementById('areaAdmin').style.display = 'none';
+            document.getElementById('painelSenha').style.display = 'block';
+            document.getElementById('painelAdmin').style.display = 'none';
+            document.getElementById('senhaAdmin').value = '';
+            renderizarDoacoes(); // Re-renderizar sem botões de deletar
+            mostrarMensagem('👋 Sessão administrativa encerrada.', 'info');
+        }
+
+        // Permitir Enter na senha
+        document.addEventListener('DOMContentLoaded', () => {
+            const senhaInput = document.getElementById('senhaAdmin');
+            if (senhaInput) {
+                senhaInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        verificarSenha();
+                    }
+                });
+            }
+        });
+
+        async function deletarDoacao(id, numeroRecibo) {
+            if (!adminLogado) {
+                mostrarMensagem('❌ Acesso negado! Faça login como administrador.', 'error');
+                return;
+            }
+
+            if (!confirm(`⚠️ Tem certeza que deseja DELETAR a doação ${numeroRecibo}?\n\nEsta ação não pode ser desfeita!`)) {
+                return;
+            }
+
+            try {
+                // Deletar do Supabase
+                const { error } = await supabaseDB
+                    .from('doacoes_sbe')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                // Remover do array local
+                const index = doacoes.findIndex(d => d.id === id);
+                if (index > -1) {
+                    doacoes.splice(index, 1);
+                }
+
+                mostrarMensagem(`✅ Doação ${numeroRecibo} deletada com sucesso!`, 'success');
+                atualizarEstatisticas();
+                renderizarDoacoes();
+            } catch (error) {
+                console.error('Erro ao deletar:', error);
+                mostrarMensagem('❌ Erro ao deletar doação. Tente novamente.', 'error');
+            }
         }
 
         inicializar();
