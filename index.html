@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doações SBE - Sociedade Beneficente Evangélica</title>
+    
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .header .subtitle {
+            font-size: 1.1em;
+            opacity: 0.95;
+            font-weight: 300;
+        }
+
+        .header .recibo-info {
+            margin-top: 15px;
+            font-size: 0.9em;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 1.3em;
+            color: #4a90e2;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e3f2fd;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #4a90e2;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .radio-option:hover {
+            border-color: #4a90e2;
+            background: #f5f9ff;
+        }
+
+        .radio-option input[type="radio"] {
+            margin-right: 8px;
+            width: auto;
+        }
+
+        .file-upload {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-upload input[type="file"] {
+            display: none;
+        }
+
+        .file-upload-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 15px;
+            background: #f5f9ff;
+            border: 2px dashed #4a90e2;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-upload-label:hover {
+            background: #e3f2fd;
+        }
+
+        .file-preview {
+            margin-top: 10px;
+            max-width: 300px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(74, 144, 226, 0.4);
+        }
+
+        .lista-doacoes {
+            list-style: none;
+        }
+
+        .doacao-item {
+            background: #f9f9f9;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #4a90e2;
+        }
+
+        .doacao-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .doacao-numero {
+            font-size: 1.1em;
+            font-weight: 700;
+            color: #4a90e2;
+        }
+
+        .doacao-data {
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        .doacao-doador {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .doacao-tipo {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .tipo-valor {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+
+        .tipo-pix {
+            background: #b3e5fc;
+            color: #01579b;
+        }
+
+        .tipo-cesta {
+            background: #ffe0b2;
+            color: #e65100;
+        }
+
+        .doacao-valor {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #2e7d32;
+            margin: 10px 0;
+        }
+
+        .btn-recibo {
+            padding: 8px 16px;
+            background: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        .btn-recibo:hover {
+            background: #357abd;
+        }
+
+        .resumo-box {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .resumo-valor {
+            font-size: 2em;
+            font-weight: 700;
+            color: #2e7d32;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #c8e6c9;
+            color: #2e7d32;
+            border-left: 4px solid #2e7d32;
+        }
+
+        .contato-whatsapp {
+            background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            font-size: 0.95em;
+            box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3);
+        }
+
+        .contato-whatsapp strong {
+            font-size: 1.1em;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .contato-whatsapp a {
+            color: white;
+            font-weight: 600;
+            text-decoration: none;
+            margin: 0 10px;
+            display: inline-block;
+        }
+
+        .contato-whatsapp a:hover {
+            text-decoration: underline;
+        }
+
+        .radio-subgroup {
+            margin-left: 20px;
+            margin-top: 10px;
+            padding: 15px;
+            background: #f5f9ff;
+            border-radius: 8px;
+            border-left: 3px solid #4a90e2;
+        }
+
+        .radio-subgroup label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .radio-subgroup input[type="radio"] {
+            margin-right: 8px;
+            width: auto;
+        }
+
+        .campo-condicional {
+            margin-top: 10px;
+            padding: 10px;
+            background: #fff3e0;
+            border-radius: 5px;
+            border-left: 3px solid #ff9800;
+        }
+
+        .tooltip-icon {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            background: #4a90e2;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 18px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: help;
+            margin-left: 8px;
+            position: relative;
+            vertical-align: middle;
+        }
+
+        .tooltip-content {
+            visibility: hidden;
+            position: absolute;
+            z-index: 1000;
+            background: #333;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.85em;
+            line-height: 1.6;
+            width: 300px;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .tooltip-content::before {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: transparent transparent #333 transparent;
+        }
+
+        .tooltip-icon:hover .tooltip-content {
+            visibility: visible;
+        }
+
+        .rodape-suporte {
+            margin-top: 40px;
+            padding: 30px 20px;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+            border-top: 3px solid #4a90e2;
+            text-align: center;
+        }
+
+        .rodape-suporte h3 {
+            color: #4a90e2;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .rodape-suporte p {
+            color: #666;
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .rodape-suporte .suporte-whatsapp {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 3px 10px rgba(37, 211, 102, 0.3);
+        }
+
+        .rodape-suporte .suporte-whatsapp:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .tooltip-content {
+                width: 250px;
+                font-size: 0.8em;
+            }
+            .content {
+                padding: 20px;
+            }
+            .header h1 {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="contato-whatsapp">
+            <strong>📱 Dúvidas? Entre em contato via WhatsApp:</strong>
+            <a href="https://wa.me/5565981346852" target="_blank">65 98134-6852</a> |
+            <a href="https://wa.me/5565999515808" target="_blank">65 99951-5808</a>
+        </div>
+        
+        <div class="header">
+            <h1>🤝 Doações SBE</h1>
+            <div class="subtitle">Sociedade Beneficente Evangélica - IEAD Coophamil</div>
+            <div class="recibo-info">
+                Próximo Recibo: <span id="proximoRecibo">2026.03.001</span>
+                <span class="tooltip-icon">i
+                    <span class="tooltip-content">
+                        <strong>📋 Formato do Número do Recibo:</strong><br><br>
+                        <strong>ANO.MÊS.NÚMERO</strong><br><br>
+                        Exemplo: <strong>2026.03.001</strong><br>
+                        • 2026 = Ano<br>
+                        • 03 = Março<br>
+                        • 001 = 1ª doação do mês<br><br>
+                        ⚠️ <em>A numeração reinicia a cada novo mês</em>
+                    </span>
+                </span>
+            </div>
+        </div>
+
+        <div class="content">
+            <div id="mensagem" style="display: none;"></div>
+
+            <!-- Link para Relatórios -->
+            <div style="text-align: center; margin: 20px 0;">
+                <a href="relatorio.html" style="display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">
+                    📊 Ver Relatório de Doações
+                </a>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">📝 Registrar Nova Doação</h2>
+                
+                <form id="formDoacao">
+                    <div class="form-group">
+                        <label>Nome do Doador *</label>
+                        <input type="text" id="doadorNome" required placeholder="Ex: IEMS Coophamil">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tipo de Doação *</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="tipoDoacao" value="valor" checked>
+                                <span>💵 Valor (Dinheiro)</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="tipoDoacao" value="pix">
+                                <span>📱 PIX</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="tipoDoacao" value="cesta_basica">
+                                <span>🛒 Cesta Básica</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Informações do Dinheiro -->
+                    <div class="form-group" id="infoDinheiro">
+                        <div style="background: #f1f8e9; border-left: 4px solid #689f38; padding: 15px; border-radius: 8px;">
+                            <h4 style="margin: 0 0 10px 0; color: #558b2f;">💵 Como doar em dinheiro</h4>
+                            <p style="margin: 5px 0; color: #666;">A doação deve ser feita diretamente no <strong>Envelope da SBE</strong> na igreja <strong>IEAD Coophamil</strong>.</p>
+                            <p style="margin: 10px 0 5px 0; color: #f57c00; font-weight: 600;">📍 Local:</p>
+                            <p style="margin: 5px 0; color: #666;">Igreja IEAD Coophamil</p>
+                        </div>
+                    </div>
+
+                    <!-- Informações do PIX -->
+                    <div class="form-group" id="infoPix" style="display: none;">
+                        <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; border-radius: 8px;">
+                            <h4 style="margin: 0 0 10px 0; color: #1976d2;">📱 Dados para PIX</h4>
+                            <p style="margin: 5px 0;"><strong>Chave PIX:</strong> leocpo@gmail.com</p>
+                            <p style="margin: 5px 0;"><strong>Favorecido:</strong> LEONARDO C P OLIVEIRA</p>
+                            <p style="margin: 15px 0 5px 0; color: #f57c00; font-weight: 600;">⚠️ Importante:</p>
+                            <p style="margin: 5px 0; color: #666;">Ao fazer o PIX, informe na <strong>observação/mensagem</strong>: <span style="background: #fff3e0; padding: 3px 8px; border-radius: 4px; font-weight: 600;">SBE Coophamil</span></p>
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="campoValor">
+                        <label>Valor (R$) *</label>
+                        <input type="number" id="valor" step="0.01" min="0" placeholder="250.00" required>
+                    </div>
+
+                    <div class="form-group" id="campoQuantidade" style="display: none;">
+                        <label>Quantidade de Cestas *</label>
+                        <input type="number" id="quantidade" min="1" value="1">
+                    </div>
+
+                    <!-- Entrega/Retirada de Cesta -->
+                    <div class="form-group" id="campoEntregaCesta" style="display: none;">
+                        <label>Como a igreja vai receber a cesta? *</label>
+                        <div class="radio-subgroup">
+                            <label>
+                                <input type="radio" name="tipoEntrega" value="entrega">
+                                📦 Vou entregar em um destes locais:
+                            </label>
+                            <div id="opcoesEntrega" style="display: none; margin-left: 25px; margin-top: 10px;">
+                                <label style="font-weight: normal;">
+                                    <input type="radio" name="localEntrega" value="rua_acre">
+                                    Rua Acre, Casa 6, Qda 79, CPA 2
+                                </label><br>
+                                <label style="font-weight: normal;">
+                                    <input type="radio" name="localEntrega" value="iead">
+                                    IEAD Coophamil
+                                </label>
+                            </div>
+                            
+                            <label style="margin-top: 10px;">
+                                <input type="radio" name="tipoEntrega" value="retirada">
+                                🏃 A igreja vai buscar
+                            </label>
+                            <div id="camposRetirada" style="display: none; margin-left: 25px; margin-top: 10px;">
+                                <div class="campo-condicional">
+                                    <label style="font-size: 0.9em; margin-bottom: 5px;">Onde a igreja deve buscar:</label>
+                                    <input type="text" id="localRetirada" placeholder="Ex: Mercado Cristo Rei, falar com João" style="width: 100%; padding: 8px;">
+                                    
+                                    <label style="font-size: 0.9em; margin: 10px 0 5px 0;">Horário disponível para buscar:</label>
+                                    <input type="text" id="horarioRetirada" placeholder="Ex: Terças e quintas, 14h às 17h" style="width: 100%; padding: 8px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Referente a (por extenso)</label>
+                        <input type="text" id="referenteA" placeholder="Ex: Duzentos e cinquenta reais">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Observação</label>
+                        <textarea id="observacao" placeholder="Informações adicionais..."></textarea>
+                    </div>
+
+                    <div class="form-group" id="campoComprovante">
+                        <label>Comprovante PIX (será convertido para base64)</label>
+                        <div class="file-upload">
+                            <input type="file" id="comprovanteFile" accept="image/*">
+                            <label for="comprovanteFile" class="file-upload-label">
+                                <span>📎</span>
+                                <span>Clique para selecionar imagem</span>
+                            </label>
+                        </div>
+                        <img id="imagePreview" class="file-preview" style="display: none;">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        Registrar Doação
+                    </button>
+                </form>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">📋 Histórico de Doações</h2>
+                <ul class="lista-doacoes" id="listaDoacoes">
+                    <li style="text-align: center; padding: 20px; color: #999;">Nenhuma doação registrada ainda.</li>
+                </ul>
+            </div>
+
+            <!-- Rodapé de Suporte -->
+            <div class="rodape-suporte">
+                <h3>🛠️ Suporte Técnico</h3>
+                <p>Encontrou algum problema ou precisa de ajuda?</p>
+                <p><strong>Entre em contato:</strong></p>
+                <p><strong>Leonardo Oliveira</strong></p>
+                <a href="https://wa.me/5565981346852" target="_blank" class="suporte-whatsapp">
+                    📱 WhatsApp: 65 98134-6852
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuração do Supabase
+        const SUPABASE_URL = 'https://fwmlimudntlrkeukvyjg.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_gx8_WdV2x6n9FoZooniJCQ_s0hWGsiW';
+        const supabaseDB = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Variável para armazenar doações
+        let doacoes = [];
+
+        const formDoacao = document.getElementById('formDoacao');
+        const listaDoacoes = document.getElementById('listaDoacoes');
+        const mensagemDiv = document.getElementById('mensagem');
+        const imagePreview = document.getElementById('imagePreview');
+        const comprovanteFile = document.getElementById('comprovanteFile');
+
+        // Alternar campos baseado no tipo
+        document.querySelectorAll('input[name="tipoDoacao"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const tipo = e.target.value;
+                const campoValor = document.getElementById('campoValor');
+                const campoQuantidade = document.getElementById('campoQuantidade');
+                const campoComprovante = document.getElementById('campoComprovante');
+                const infoPix = document.getElementById('infoPix');
+                const infoDinheiro = document.getElementById('infoDinheiro');
+
+                if (tipo === 'cesta_basica') {
+                    campoValor.style.display = 'none';
+                    campoQuantidade.style.display = 'block';
+                    campoComprovante.style.display = 'none';
+                    infoPix.style.display = 'none';
+                    infoDinheiro.style.display = 'none';
+                    document.getElementById('campoEntregaCesta').style.display = 'block';
+                    document.getElementById('valor').required = false;
+                } else if (tipo === 'pix') {
+                    campoValor.style.display = 'block';
+                    campoQuantidade.style.display = 'none';
+                    campoComprovante.style.display = 'block';
+                    infoPix.style.display = 'block';
+                    infoDinheiro.style.display = 'none';
+                    document.getElementById('campoEntregaCesta').style.display = 'none';
+                    document.getElementById('valor').required = true;
+                } else {
+                    campoValor.style.display = 'block';
+                    campoQuantidade.style.display = 'none';
+                    campoComprovante.style.display = 'block';
+                    infoPix.style.display = 'none';
+                    infoDinheiro.style.display = 'block';
+                    document.getElementById('campoEntregaCesta').style.display = 'none';
+                    document.getElementById('valor').required = true;
+                }
+            });
+        });
+
+        // Controle de entrega/retirada de cesta
+        document.querySelectorAll('input[name="tipoEntrega"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const tipo = e.target.value;
+                const opcoesEntrega = document.getElementById('opcoesEntrega');
+                const camposRetirada = document.getElementById('camposRetirada');
+                
+                if (tipo === 'entrega') {
+                    opcoesEntrega.style.display = 'block';
+                    camposRetirada.style.display = 'none';
+                } else if (tipo === 'retirada') {
+                    opcoesEntrega.style.display = 'none';
+                    camposRetirada.style.display = 'block';
+                }
+            });
+        });
+
+        // Preview da imagem
+        comprovanteFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imagePreview.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function gerarProximoRecibo() {
+            const agora = new Date();
+            const ano = agora.getFullYear();
+            const mes = agora.getMonth() + 1;
+
+            const doacoesMes = doacoes.filter(d => d.ano === ano && d.mes === mes);
+            const proximoNum = doacoesMes.length + 1;
+
+            return {
+                numero: `${ano}.${String(mes).padStart(2, '0')}.${String(proximoNum).padStart(3, '0')}`,
+                ano,
+                mes,
+                sequencial: proximoNum
+            };
+        }
+
+        function atualizarEstatisticas() {
+            const anoAtual = new Date().getFullYear();
+            const mesAtual = new Date().getMonth() + 1;
+
+            const totalGeral = doacoes
+                .filter(d => d.ano === anoAtual)
+                .reduce((sum, d) => sum + (parseFloat(d.valor) || 0), 0);
+
+            const totalMes = doacoes
+                .filter(d => d.ano === anoAtual && d.mes === mesAtual)
+                .reduce((sum, d) => sum + (parseFloat(d.valor) || 0), 0);
+
+            document.getElementById('totalGeral').textContent = 'R$ ' + totalGeral.toFixed(2).replace('.', ',');
+            document.getElementById('totalMes').textContent = 'R$ ' + totalMes.toFixed(2).replace('.', ',');
+            document.getElementById('totalDoacoes').textContent = doacoes.filter(d => d.ano === anoAtual).length;
+
+            const proximo = gerarProximoRecibo();
+            document.getElementById('proximoRecibo').textContent = proximo.numero;
+        }
+
+        function renderizarDoacoes() {
+            if (doacoes.length === 0) {
+                listaDoacoes.innerHTML = '<li style="text-align: center; padding: 20px; color: #999;">Nenhuma doação registrada ainda.</li>';
+                return;
+            }
+
+            listaDoacoes.innerHTML = '';
+
+            doacoes.slice().reverse().forEach(doacao => {
+                const li = document.createElement('li');
+                li.className = 'doacao-item';
+
+                const data = new Date(doacao.criado_em).toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                const tipoLabel = {
+                    'valor': 'Valor',
+                    'pix': 'PIX',
+                    'cesta_basica': 'Cesta Básica'
+                }[doacao.tipo_doacao];
+
+                const tipoClass = {
+                    'valor': 'tipo-valor',
+                    'pix': 'tipo-pix',
+                    'cesta_basica': 'tipo-cesta'
+                }[doacao.tipo_doacao];
+
+                let valorDisplay = '';
+                if (doacao.tipo_doacao === 'cesta_basica') {
+                    valorDisplay = `${doacao.quantidade} Cesta${doacao.quantidade > 1 ? 's' : ''}`;
+                } else {
+                    valorDisplay = `R$ ${parseFloat(doacao.valor || 0).toFixed(2).replace('.', ',')}`;
+                }
+
+                li.innerHTML = `
+                    <div class="doacao-header">
+                        <div class="doacao-numero">Recibo Nº ${doacao.numero_recibo}</div>
+                        <div class="doacao-data">${data}</div>
+                    </div>
+                    <div>
+                        <div class="doacao-doador">${doacao.doador_nome}</div>
+                        <span class="doacao-tipo ${tipoClass}">${tipoLabel}</span>
+                    </div>
+                    <div class="doacao-valor">${valorDisplay}</div>
+                    ${doacao.referente_a ? `<div style="color: #666; margin: 5px 0;"><em>${doacao.referente_a}</em></div>` : ''}
+                    ${doacao.observacao ? `<div style="color: #666; margin: 5px 0;">Obs: ${doacao.observacao}</div>` : ''}
+                    ${doacao.imagem_comprovante ? `<div style="margin-top: 10px;"><img src="${doacao.imagem_comprovante}" style="max-width: 200px; border-radius: 5px; border: 1px solid #ddd;"></div>` : ''}
+                    <button class="btn-recibo" onclick="abrirRecibo('${doacao.numero_recibo}')">
+                        📄 Ver Recibo
+                    </button>
+                `;
+
+                listaDoacoes.appendChild(li);
+            });
+        }
+
+        function mostrarMensagem(texto, tipo = 'success') {
+            mensagemDiv.textContent = texto;
+            mensagemDiv.className = `alert alert-${tipo}`;
+            mensagemDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                mensagemDiv.style.display = 'none';
+            }, 5000);
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        formDoacao.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const recibo = gerarProximoRecibo();
+            const tipoDoacao = document.querySelector('input[name="tipoDoacao"]:checked').value;
+
+            // Preparar informações de entrega/retirada para cestas
+            let observacaoCompleta = document.getElementById('observacao').value || '';
+            
+            if (tipoDoacao === 'cesta_basica') {
+                const tipoEntrega = document.querySelector('input[name="tipoEntrega"]:checked')?.value;
+                
+                if (tipoEntrega === 'entrega') {
+                    const localEntrega = document.querySelector('input[name="localEntrega"]:checked')?.value;
+                    if (localEntrega === 'rua_acre') {
+                        observacaoCompleta = '📦 Doador vai ENTREGAR: Rua Acre, Casa 6, Qda 79, CPA 2. ' + observacaoCompleta;
+                    } else if (localEntrega === 'iead') {
+                        observacaoCompleta = '📦 Doador vai ENTREGAR: IEAD Coophamil. ' + observacaoCompleta;
+                    }
+                } else if (tipoEntrega === 'retirada') {
+                    const local = document.getElementById('localRetirada').value;
+                    const horario = document.getElementById('horarioRetirada').value;
+                    observacaoCompleta = `🏃 Igreja vai BUSCAR - Local: ${local}, Horário: ${horario}. ` + observacaoCompleta;
+                }
+            }
+
+            let imagemUrl = null;
+            
+            // Upload da imagem para o Supabase Storage (se houver)
+            if (comprovanteFile.files.length > 0 && tipoDoacao !== 'cesta_basica') {
+                try {
+                    const file = comprovanteFile.files[0];
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${recibo.numero}.${fileExt}`;
+                    const filePath = `${fileName}`;
+
+                    const { data: uploadData, error: uploadError } = await supabaseDB.storage
+                        .from('comprovantes-sbe')
+                        .upload(filePath, file, {
+                            cacheControl: '3600',
+                            upsert: true
+                        });
+
+                    if (uploadError) {
+                        console.error('Erro ao fazer upload:', uploadError);
+                    } else {
+                        // Obter URL pública da imagem
+                        const { data: urlData } = supabaseDB.storage
+                            .from('comprovantes-sbe')
+                            .getPublicUrl(filePath);
+                        
+                        imagemUrl = urlData.publicUrl;
+                    }
+                } catch (error) {
+                    console.error('Erro no upload:', error);
+                }
+            }
+
+            const doacao = {
+                numero_recibo: recibo.numero,
+                doador_nome: document.getElementById('doadorNome').value,
+                tipo_doacao: tipoDoacao,
+                valor: tipoDoacao === 'cesta_basica' ? null : parseFloat(document.getElementById('valor').value),
+                quantidade: tipoDoacao === 'cesta_basica' ? parseInt(document.getElementById('quantidade').value) : 1,
+                referente_a: document.getElementById('referenteA').value || null,
+                observacao: observacaoCompleta || null,
+                imagem_comprovante: imagemUrl,
+                criado_em: new Date().toISOString(),
+                ano: recibo.ano,
+                mes: recibo.mes,
+                numero_sequencial: recibo.sequencial
+            };
+
+            // Salvar no Supabase
+            try {
+                const { data, error } = await supabaseDB
+                    .from('doacoes_sbe')
+                    .insert([doacao])
+                    .select();
+
+                if (error) throw error;
+                
+                // Atualizar array local com dados do Supabase (inclui o ID)
+                if (data && data[0]) {
+                    doacoes.unshift(data[0]);
+                }
+            } catch (error) {
+                console.error('Erro ao salvar no Supabase:', error);
+               // Em caso de erro, salvar localmente
+                doacoes.push(doacao);
+            }
+
+            mostrarMensagem(`✅ Doação registrada com sucesso! Recibo Nº ${recibo.numero}`, 'success');
+            
+            formDoacao.reset();
+            imagePreview.style.display = 'none';
+            
+            atualizarEstatisticas();
+            renderizarDoacoes();
+        });
+
+        function abrirRecibo(numeroRecibo) {
+            const doacao = doacoes.find(d => d.numero_recibo === numeroRecibo);
+            if (!doacao) return;
+
+            const params = new URLSearchParams({
+                numero: doacao.numero_recibo,
+                doador: doacao.doador_nome,
+                tipo: doacao.tipo_doacao,
+                valor: doacao.valor || '',
+                quantidade: doacao.quantidade || 1,
+                referente: doacao.referente_a || '',
+                data: doacao.criado_em
+            });
+
+            window.open(`recibo.html?${params.toString()}`, '_blank');
+        }
+
+        // Carregar doações do Supabase
+        async function carregarDoacoesSupabase() {
+            try {
+                const { data, error } = await supabaseDB
+                    .from('doacoes_sbe')
+                    .select('*')
+                    .order('criado_em', { ascending: false });
+
+                if (!error && data) {
+                    doacoes = data;
+                }
+            } catch (error) {
+                console.log('Usando modo offline:', error);
+            }
+        }
+
+        // Inicializar
+        async function inicializar() {
+            await carregarDoacoesSupabase();
+            atualizarEstatisticas();
+            renderizarDoacoes();
+        }
+
+        inicializar();
+    </script>
+</body>
+</html>
