@@ -469,20 +469,6 @@
         <div class="header">
             <h1>🤝 Doações SBE</h1>
             <div class="subtitle">Sociedade Beneficente Evangélica - IEAD Coophamil</div>
-            <div class="recibo-info">
-                Próximo Recibo: <span id="proximoRecibo">2026.03.001</span>
-                <span class="tooltip-icon">i
-                    <span class="tooltip-content">
-                        <strong>📋 Formato do Número do Recibo:</strong><br><br>
-                        <strong>ANO.MÊS.NÚMERO</strong><br><br>
-                        Exemplo: <strong>2026.03.001</strong><br>
-                        • 2026 = Ano<br>
-                        • 03 = Março<br>
-                        • 001 = 1ª doação do mês<br><br>
-                        ⚠️ <em>A numeração reinicia a cada novo mês</em>
-                    </span>
-                </span>
-            </div>
         </div>
 
         <div class="content">
@@ -738,48 +724,10 @@
             }
         });
 
-        function gerarProximoRecibo() {
-            const agora = new Date();
-            const ano = agora.getFullYear();
-            const mes = agora.getMonth() + 1;
 
-            // Filtrar doações do mês atual considerando ano e mês
-            const doacoesMes = doacoes.filter(d => {
-                // Garantir que ano e mes existem na doação
-                return d.ano === ano && d.mes === mes;
-            });
-            
-            console.log(`📊 Gerando próximo recibo: ${ano}.${mes}`);
-            console.log(`  - Total de doações no mês: ${doacoesMes.length}`);
-            
-            const proximoNum = doacoesMes.length + 1;
-
-            return {
-                numero: `${ano}.${String(mes).padStart(2, '0')}.${String(proximoNum).padStart(3, '0')}`,
-                ano,
-                mes,
-                sequencial: proximoNum
-            };
-        }
 
         function atualizarEstatisticas() {
-            const anoAtual = new Date().getFullYear();
-            const mesAtual = new Date().getMonth() + 1;
-
-            const totalGeral = doacoes
-                .filter(d => d.ano === anoAtual)
-                .reduce((sum, d) => sum + (parseFloat(d.valor) || 0), 0);
-
-            const totalMes = doacoes
-                .filter(d => d.ano === anoAtual && d.mes === mesAtual)
-                .reduce((sum, d) => sum + (parseFloat(d.valor) || 0), 0);
-
-            document.getElementById('totalGeral').textContent = 'R$ ' + totalGeral.toFixed(2).replace('.', ',');
-            document.getElementById('totalMes').textContent = 'R$ ' + totalMes.toFixed(2).replace('.', ',');
-            document.getElementById('totalDoacoes').textContent = doacoes.filter(d => d.ano === anoAtual).length;
-
-            const proximo = gerarProximoRecibo();
-            document.getElementById('proximoRecibo').textContent = proximo.numero;
+            // Estatísticas removidas - sistema simplificado
         }
 
         function renderizarDoacoes() {
@@ -802,6 +750,8 @@
                     minute: '2-digit'
                 });
 
+                const recibo = `#${doacao.id}`;
+
                 const tipoLabel = {
                     'valor': 'Valor',
                     'pix': 'PIX',
@@ -823,7 +773,7 @@
 
                 li.innerHTML = `
                     <div class="doacao-header">
-                        <div class="doacao-numero">Recibo Nº ${doacao.numero_recibo}</div>
+                        <div class="doacao-numero">Doação ${recibo}</div>
                         <div class="doacao-data">${data}</div>
                     </div>
                     <div>
@@ -835,10 +785,10 @@
                     ${doacao.observacao ? `<div style="color: #666; margin: 5px 0;">Obs: ${doacao.observacao}</div>` : ''}
                     ${doacao.imagem_comprovante ? `<div style="margin-top: 10px;"><img src="${doacao.imagem_comprovante}" style="max-width: 200px; border-radius: 5px; border: 1px solid #ddd;"></div>` : ''}
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <button class="btn-recibo" onclick="abrirRecibo('${doacao.numero_recibo}')">
-                            📄 Ver Recibo
+                        <button class="btn-recibo" onclick="abrirRecibo('${doacao.id}')">
+                            📄 Ver Comprovante
                         </button>
-                        ${adminLogado ? `<button class="btn-recibo" style="background: #e53935;" onclick="deletarDoacao('${doacao.id}', '${doacao.numero_recibo}')">
+                        ${adminLogado ? `<button class="btn-recibo" style="background: #e53935;" onclick="deletarDoacao('${doacao.id}', '${recibo}')">
                             🗑️ Deletar
                         </button>` : ''}
                     </div>
@@ -863,8 +813,8 @@
         formDoacao.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const recibo = gerarProximoRecibo();
             const tipoDoacao = document.querySelector('input[name="tipoDoacao"]:checked').value;
+            const agora = new Date();
 
             // Preparar informações de entrega/retirada para cestas
             let observacaoCompleta = document.getElementById('observacao').value || '';
@@ -893,7 +843,8 @@
                 try {
                     const file = comprovanteFile.files[0];
                     const fileExt = file.name.split('.').pop();
-                    const fileName = `${recibo.numero}.${fileExt}`;
+                    const timestamp = Date.now();
+                    const fileName = `comprovante_${timestamp}.${fileExt}`;
                     const filePath = `${fileName}`;
 
                     const { data: uploadData, error: uploadError } = await supabaseDB.storage
@@ -919,7 +870,6 @@
             }
 
             const doacao = {
-                numero_recibo: recibo.numero,
                 doador_nome: document.getElementById('doadorNome').value,
                 tipo_doacao: tipoDoacao,
                 valor: tipoDoacao === 'cesta_basica' ? null : parseFloat(document.getElementById('valor').value),
@@ -927,10 +877,11 @@
                 referente_a: document.getElementById('referenteA').value || null,
                 observacao: observacaoCompleta || null,
                 imagem_comprovante: imagemUrl,
-                criado_em: new Date().toISOString(),
-                ano: recibo.ano,
-                mes: recibo.mes,
-                numero_sequencial: recibo.sequencial
+                criado_em: agora.toISOString(),
+                ano: agora.getFullYear(),
+                mes: agora.getMonth() + 1,
+                numero_recibo: null,
+                numero_sequencial: null
             };
 
             // Salvar no Supabase
@@ -952,7 +903,7 @@
                 doacoes.push(doacao);
             }
 
-            mostrarMensagem(`✅ Doação registrada com sucesso! Recibo Nº ${recibo.numero}`, 'success');
+            mostrarMensagem(`✅ Doação registrada com sucesso!`, 'success');
             
             formDoacao.reset();
             imagePreview.style.display = 'none';
@@ -961,21 +912,16 @@
             renderizarDoacoes();
         });
 
-        function abrirRecibo(numeroRecibo) {
-            const doacao = doacoes.find(d => d.numero_recibo === numeroRecibo);
+        function abrirRecibo(id) {
+            const doacao = doacoes.find(d => d.id === id);
             if (!doacao) return;
 
-            const params = new URLSearchParams({
-                numero: doacao.numero_recibo,
-                doador: doacao.doador_nome,
-                tipo: doacao.tipo_doacao,
-                valor: doacao.valor || '',
-                quantidade: doacao.quantidade || 1,
-                referente: doacao.referente_a || '',
-                data: doacao.criado_em
-            });
-
-            window.open(`recibo.html?${params.toString()}`, '_blank');
+            // Se houver imagem de comprovante, abrir em nova aba
+            if (doacao.imagem_comprovante) {
+                window.open(doacao.imagem_comprovante, '_blank');
+            } else {
+                alert('📄 Esta doação não possui comprovante anexado.');
+            }
         }
 
         // Carregar doações do Supabase
@@ -1053,13 +999,13 @@
             }
         });
 
-        async function deletarDoacao(id, numeroRecibo) {
+        async function deletarDoacao(id, recibo) {
             if (!adminLogado) {
                 mostrarMensagem('❌ Acesso negado! Faça login como administrador.', 'error');
                 return;
             }
 
-            if (!confirm(`⚠️ Tem certeza que deseja DELETAR a doação ${numeroRecibo}?\n\nEsta ação não pode ser desfeita!`)) {
+            if (!confirm(`⚠️ Tem certeza que deseja DELETAR a doação ${recibo}?\n\nEsta ação não pode ser desfeita!`)) {
                 return;
             }
 
@@ -1078,7 +1024,7 @@
                     doacoes.splice(index, 1);
                 }
 
-                mostrarMensagem(`✅ Doação ${numeroRecibo} deletada com sucesso!`, 'success');
+                mostrarMensagem(`✅ Doação ${recibo} deletada com sucesso!`, 'success');
                 atualizarEstatisticas();
                 renderizarDoacoes();
             } catch (error) {
