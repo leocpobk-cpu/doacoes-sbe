@@ -462,9 +462,8 @@
     <div class="container">
         <div class="contato-whatsapp">
             <strong>📱 Dúvidas? Entre em contato via WhatsApp:</strong>
-            <a href="https://wa.me/5565981186806" target="_blank">65 98118-6806</a> |
+            <a href="https://wa.me/5565981346852" target="_blank">65 98134-6852</a> |
             <a href="https://wa.me/5565999515808" target="_blank">65 99951-5808</a>
-            <a href="https://wa.me/5565981346852" target="_blank">65 98134-6852</a>
         </div>
         
         <div class="header">
@@ -557,7 +556,7 @@
                         <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; border-radius: 8px;">
                             <h4 style="margin: 0 0 10px 0; color: #1976d2;">📱 Dados para PIX</h4>
                             <p style="margin: 5px 0;"><strong>Chave PIX:</strong> 65981346852</p>
-                            <p style="margin: 5px 0;"><strong>Favorecido:</strong> Ana Julia Magno Fonseca (Mercado Pago)</p>
+                            <p style="margin: 5px 0;"><strong>Favorecido:</strong> ANA JULIA MAGNO FONSECA</p>
                             <p style="margin: 15px 0 5px 0; color: #f57c00; font-weight: 600;">⚠️ Importante:</p>
                             <p style="margin: 5px 0; color: #666;">Ao fazer o PIX, informe na <strong>observação/mensagem</strong>: <span style="background: #fff3e0; padding: 3px 8px; border-radius: 4px; font-weight: 600;">SBE Coophamil</span></p>
                         </div>
@@ -744,7 +743,15 @@
             const ano = agora.getFullYear();
             const mes = agora.getMonth() + 1;
 
-            const doacoesMes = doacoes.filter(d => d.ano === ano && d.mes === mes);
+            // Filtrar doações do mês atual considerando ano e mês
+            const doacoesMes = doacoes.filter(d => {
+                // Garantir que ano e mes existem na doação
+                return d.ano === ano && d.mes === mes;
+            });
+            
+            console.log(`📊 Gerando próximo recibo: ${ano}.${mes}`);
+            console.log(`  - Total de doações no mês: ${doacoesMes.length}`);
+            
             const proximoNum = doacoesMes.length + 1;
 
             return {
@@ -981,9 +988,10 @@
 
                 if (!error && data) {
                     doacoes = data;
+                    console.log(`✅ ${doacoes.length} doações carregadas do Supabase`);
                 }
             } catch (error) {
-                console.log('Usando modo offline:', error);
+                console.log('⚠️ Usando modo offline:', error);
             }
         }
 
@@ -993,8 +1001,6 @@
             atualizarEstatisticas();
             renderizarDoacoes();
         }
-
-        inicializar();
 
         // Sistema de Admin
         let adminLogado = false;
@@ -1081,6 +1087,7 @@
             }
         }
 
+        // Chamar inicialização apenas uma vez
         inicializar();
     </script>
 </body>
