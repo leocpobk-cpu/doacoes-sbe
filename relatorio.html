@@ -1019,10 +1019,13 @@
                 anoSelect.appendChild(option);
             }
 
-            // NÃO selecionar automaticamente - usuário deve escolher
-            // const mesAtual = new Date().getMonth() + 1;
-            // mesSelect.value = mesAtual;
-            // anoSelect.value = anoAtual;
+            // Selecionar automaticamente o mês e ano atual
+            const mesAtual = new Date().getMonth() + 1;
+            mesSelect.value = mesAtual;
+            anoSelect.value = anoAtual;
+            
+            // Atualizar o relatório com o mês/ano atual
+            atualizarRelatorioMes();
         }
 
         function atualizarRelatorioMes() {
