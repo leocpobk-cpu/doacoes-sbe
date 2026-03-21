@@ -306,7 +306,7 @@
             <div class="filtro-mes">
                 <label for="mesSelect">📅 Selecionar Mês:</label>
                 <select id="mesSelect" onchange="atualizarRelatorioMes()">
-                    <option value="">Todos os Meses</option>
+                    <option value="">Selecione o mês</option>
                 </select>
                 <select id="anoSelect" onchange="atualizarRelatorioMes()">
                     <option value="">Selecione o Ano</option>
@@ -468,19 +468,20 @@
                 mesSelect.appendChild(option);
             });
 
-            // Preencher anos (últimos 5 anos)
+            // Preencher anos (de 2026 em diante)
             const anoAtual = new Date().getFullYear();
-            for (let ano = anoAtual; ano >= anoAtual - 4; ano--) {
+            const anoInicio = 2026;
+            for (let ano = anoAtual; ano >= anoInicio; ano--) {
                 const option = document.createElement('option');
                 option.value = ano;
                 option.textContent = ano;
                 anoSelect.appendChild(option);
             }
 
-            // Selecionar mês e ano atual
-            const mesAtual = new Date().getMonth() + 1;
-            mesSelect.value = mesAtual;
-            anoSelect.value = anoAtual;
+            // NÃO selecionar automaticamente - usuário deve escolher
+            // const mesAtual = new Date().getMonth() + 1;
+            // mesSelect.value = mesAtual;
+            // anoSelect.value = anoAtual;
         }
 
         function atualizarRelatorioMes() {
@@ -495,16 +496,25 @@
                 const anoAtual = dataAtual.getFullYear();
                 const mesFechado = (ano < anoAtual) || (ano === anoAtual && mes < mesAtual);
 
-                // Botão de relatório completo
-                btnPDF.disabled = false;
-                btnPDF.textContent = mesFechado ? `📄 Relatório Completo - ${getNomeMes(mes)}/${ano}` : `📄 Relatório do Mês - ${getNomeMes(mes)}/${ano}`;
+                // Botão de relatório completo (vermelho)
+                // Só habilitado para mês FECHADO
+                if (mesFechado) {
+                    btnPDF.disabled = false;
+                    btnPDF.textContent = `📄 Relatório Completo - ${getNomeMes(mes)}/${ano}`;
+                } else {
+                    // Mês em curso - botão desabilitado/esmaecido
+                    btnPDF.disabled = true;
+                    btnPDF.textContent = `📄 Relatório do Mês - ${getNomeMes(mes)}/${ano}`;
+                }
 
-                // Botão de relatório parcial (só para mês em curso)
+                // Botão de relatório parcial (laranja)
+                // Só para mês em curso (não fechado)
                 if (!mesFechado && ano === anoAtual && mes === mesAtual) {
                     btnPDFParcial.style.display = 'inline-block';
                     btnPDFParcial.disabled = false;
                     btnPDFParcial.textContent = `📊 Relatório Parcial - ${getNomeMes(mes)}/${ano}`;
                 } else {
+                    // Mês fechado - esconder botão parcial
                     btnPDFParcial.style.display = 'none';
                 }
             } else {
@@ -531,6 +541,22 @@
                 return;
             }
 
+            // Validar se pode gerar o relatório
+            const dataAtual = new Date();
+            const mesAtual = dataAtual.getMonth() + 1;
+            const anoAtual = dataAtual.getFullYear();
+            const mesFechado = (ano < anoAtual) || (ano === anoAtual && mes < mesAtual);
+
+            if (!parcial && !mesFechado) {
+                alert('⚠️ O mês ainda está em curso! Use o botão "Relatório Parcial" para gerar o relatório atual.');
+                return;
+            }
+
+            if (parcial && mesFechado) {
+                alert('⚠️ Este mês já está fechado! Use o botão "Relatório Completo".');
+                return;
+            }
+
             // Filtrar doações do mês
             const doacoesMes = doacoes.filter(d => d.mes === mes && d.ano === ano);
 
@@ -541,12 +567,6 @@
 
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-
-            // Verificar se o mês está fechado ou em curso
-            const dataAtual = new Date();
-            const mesAtual = dataAtual.getMonth() + 1;
-            const anoAtual = dataAtual.getFullYear();
-            const mesFechado = (ano < anoAtual) || (ano === anoAtual && mes < mesAtual);
             
             // Calcular período do relatório parcial
             const primeiroDiaMes = new Date(ano, mes - 1, 1);
@@ -600,7 +620,7 @@
             if (doacoesDinheiro.length > 0) {
                 doc.setFontSize(13);
                 doc.setFont(undefined, 'bold');
-                doc.text('💰 Doações em Dinheiro e PIX', 15, yPos);
+                doc.text('DOACOES EM DINHEIRO E PIX', 15, yPos);
                 yPos += 8;
 
                 doc.setFontSize(9);
@@ -614,9 +634,16 @@
 
                     const tipoLabel = doacao.tipo_doacao === 'pix' ? 'PIX' : 'Dinheiro';
                     const valor = `R$ ${parseFloat(doacao.valor || 0).toFixed(2).replace('.', ',')}`;
-
-                    doc.text(`${index + 1}. ${doacao.doador_nome}`, 18, yPos);
-                    doc.text(`${tipoLabel} - ${valor}`, 130, yPos);
+                    
+                    // Nome do doador com pontos até o valor
+                    const nome = `${index + 1}. ${doacao.doador_nome}`;
+                    const tipoValor = `${tipoLabel} - ${valor}`;
+                    
+                    // Calcular espaço disponível e preencher com pontos
+                    const espacoDisponivel = 110; // espaço entre nome e valor
+                    const pontilhado = '.'.repeat(Math.max(0, Math.floor((espacoDisponivel - doc.getTextWidth(nome)) / doc.getTextWidth('.'))));
+                    
+                    doc.text(`${nome} ${pontilhado} ${tipoValor}`, 18, yPos);
                     yPos += 5;
 
                     if (doacao.referente_a) {
@@ -643,7 +670,7 @@
 
                 doc.setFontSize(13);
                 doc.setFont(undefined, 'bold');
-                doc.text('🧺 Doações de Cestas Básicas', 15, yPos);
+                doc.text('DOACOES DE CESTAS BASICAS', 15, yPos);
                 yPos += 8;
 
                 doc.setFontSize(9);
@@ -656,9 +683,13 @@
                     }
 
                     const quantidade = `${doacao.quantidade} cesta${doacao.quantidade > 1 ? 's' : ''}`;
-
-                    doc.text(`${index + 1}. ${doacao.doador_nome}`, 18, yPos);
-                    doc.text(quantidade, 130, yPos);
+                    const nome = `${index + 1}. ${doacao.doador_nome}`;
+                    
+                    // Calcular espaço e adicionar pontos
+                    const espacoDisponivel = 110;
+                    const pontilhado = '.'.repeat(Math.max(0, Math.floor((espacoDisponivel - doc.getTextWidth(nome)) / doc.getTextWidth('.'))));
+                    
+                    doc.text(`${nome} ${pontilhado} ${quantidade}`, 18, yPos);
                     yPos += 5;
 
                     if (doacao.observacao) {
@@ -689,7 +720,7 @@
 
             doc.setFontSize(12);
             doc.setFont(undefined, 'bold');
-            doc.text('📊 RESUMO GERAL', 15, yPos);
+            doc.text('RESUMO GERAL', 15, yPos);
             yPos += 7;
 
             doc.setFontSize(10);
