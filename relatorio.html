@@ -204,11 +204,18 @@
             padding: 12px;
             text-align: left;
             font-weight: 600;
+            white-space: nowrap;
         }
 
         .extrato-table td {
             padding: 12px;
             border-bottom: 1px solid #eee;
+            white-space: nowrap;
+        }
+
+        .extrato-table td:nth-child(3) {
+            white-space: normal;
+            min-width: 250px;
         }
 
         .extrato-table tr:hover {
@@ -231,14 +238,15 @@
         }
 
         .btn-deletar {
-            padding: 5px 12px;
+            padding: 4px 8px;
             background: #f44336;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 0.85em;
+            font-size: 0.75em;
             transition: all 0.3s;
+            white-space: nowrap;
         }
 
         .btn-deletar:hover {
@@ -544,6 +552,8 @@
                                 <option value="Medicamentos">Medicamentos</option>
                                 <option value="Vestuário">Vestuário</option>
                                 <option value="Transporte">Transporte</option>
+                                <option value="Oferta">Oferta</option>
+                                <option value="Tributos GT">Tributos GT</option>
                                 <option value="Outros">Outros</option>
                             </select>
                         </div>
@@ -924,13 +934,13 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Data</th>
-                                <th>Documento</th>
-                                <th>Descrição</th>
-                                <th style="text-align: right;">Entrada</th>
-                                <th style="text-align: right;">Saída</th>
-                                <th style="text-align: right;">Saldo</th>
-                                <th style="text-align: center;">Ações</th>
+                                <th style="width: 100px;">Data</th>
+                                <th style="width: 130px;">Documento</th>
+                                <th style="width: auto;">Descrição</th>
+                                <th style="text-align: right; width: 100px;">Entrada</th>
+                                <th style="text-align: right; width: 100px;">Saída</th>
+                                <th style="text-align: right; width: 110px;">Saldo</th>
+                                <th style="text-align: center; width: 100px;">Ações</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -950,13 +960,12 @@
                 const dataFormatada = t.data.toLocaleDateString('pt-BR', {
                     day: '2-digit',
                     month: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit'
+                    year: 'numeric'
                 });
 
                 const entrada = t.tipo === 'entrada' ? `<span class="extrato-entrada">R$ ${t.valor.toFixed(2).replace('.', ',')}</span>` : '-';
                 const saida = t.tipo === 'saida' ? `<span class="extrato-saida">R$ ${t.valor.toFixed(2).replace('.', ',')}</span>` : '-';
-                const btnDeletar = t.tipo === 'saida' ? `<button class="btn-deletar" onclick="deletarSaida(${t.id})">🗑️ Deletar</button>` : '';
+                const btnDeletar = t.tipo === 'saida' ? `<button class="btn-deletar" onclick="deletarSaida(${t.id})" title="Deletar esta saída">🗑️</button>` : '';
 
                 html += `
                     <tr>
