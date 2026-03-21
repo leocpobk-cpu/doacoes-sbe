@@ -84,6 +84,18 @@
             border-color: #ff9800;
         }
 
+        .card.saldo-inicial {
+            border-color: #9c27b0;
+        }
+
+        .card.saidas {
+            border-color: #f44336;
+        }
+
+        .card.saldo-final {
+            border-color: #4caf50;
+        }
+
         .card h3 {
             font-size: 0.9em;
             color: #666;
@@ -97,6 +109,140 @@
             font-weight: 700;
             color: #333;
             margin: 10px 0;
+        }
+
+        /* Estilos para Saídas */
+        .secao-saidas {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .form-saida {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #4a90e2;
+        }
+
+        .btn-registrar {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1em;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+            transition: all 0.3s;
+        }
+
+        .btn-registrar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        /* Extrato Bancário */
+        .extrato-bancario {
+            margin-bottom: 30px;
+        }
+
+        .extrato-table {
+            width: 100%;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .extrato-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .extrato-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .extrato-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .extrato-table tr:hover {
+            background: #f5f5f5;
+        }
+
+        .extrato-entrada {
+            color: #4caf50;
+            font-weight: 600;
+        }
+
+        .extrato-saida {
+            color: #f44336;
+            font-weight: 600;
+        }
+
+        .extrato-saldo {
+            background: #f0f0f0;
+            font-weight: 700;
+        }
+
+        .btn-deletar {
+            padding: 5px 12px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.3s;
+        }
+
+        .btn-deletar:hover {
+            background: #d32f2f;
         }
 
         .card.total .valor {
@@ -286,8 +432,25 @@
             }
 
             .filtro-mes select,
-            .btn-pdf {
+            .btn-pdf,
+            .btn-pdf-parcial {
                 width: 100%;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .extrato-table {
+                overflow-x: auto;
+            }
+
+            .extrato-table table {
+                min-width: 800px;
+            }
+
+            .card .valor {
+                font-size: 2em;
             }
         }
     </style>
@@ -337,6 +500,69 @@
                 </div>
             </div>
 
+            <!-- Cards de Controle Financeiro (Estilo Conta Bancária) -->
+            <div class="cards-container">
+                <div class="card saldo-inicial">
+                    <h3>💰 Saldo Inicial do Mês</h3>
+                    <div class="valor" id="saldoInicial">R$ 0,00</div>
+                </div>
+
+                <div class="card saidas">
+                    <h3>📤 Saídas do Mês</h3>
+                    <div class="valor" id="totalSaidas">R$ 0,00</div>
+                </div>
+
+                <div class="card saldo-final">
+                    <h3>💵 Saldo Atual</h3>
+                    <div class="valor" id="saldoFinal">R$ 0,00</div>
+                </div>
+            </div>
+
+            <!-- Seção de Registro de Saídas -->
+            <div class="secao-saidas">
+                <h2 class="section-title">📤 Registrar Saída</h2>
+                <form id="formSaida" class="form-saida">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Documento/Recibo</label>
+                            <input type="text" id="numeroDocumento" required placeholder="Ex: Nota Fiscal 001">
+                        </div>
+                        <div class="form-group">
+                            <label>Valor (R$)</label>
+                            <input type="number" id="valorSaida" step="0.01" required placeholder="0,00">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Descrição</label>
+                            <input type="text" id="descricaoSaida" required placeholder="Ex: Compra de alimentos">
+                        </div>
+                        <div class="form-group">
+                            <label>Categoria</label>
+                            <select id="categoriaSaida">
+                                <option value="Alimentos">Alimentos</option>
+                                <option value="Medicamentos">Medicamentos</option>
+                                <option value="Vestuário">Vestuário</option>
+                                <option value="Transporte">Transporte</option>
+                                <option value="Outros">Outros</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Observação (opcional)</label>
+                        <textarea id="observacaoSaida" rows="2" placeholder="Informações adicionais..."></textarea>
+                    </div>
+                    <button type="submit" class="btn-registrar">✅ Registrar Saída</button>
+                </form>
+            </div>
+
+            <!-- Extrato Bancário -->
+            <div class="extrato-bancario">
+                <h2 class="section-title">🏦 Extrato do Mês (Tipo Conta Bancária)</h2>
+                <div id="loadingExtrato" class="loading">Carregando extrato...</div>
+                <div id="extratoContainer"></div>
+            </div>
+
             <!-- Lista de Doações -->
             <h2 class="section-title">📋 Histórico Completo de Doações</h2>
             <div id="loadingDoacoes" class="loading">Carregando doações...</div>
@@ -351,6 +577,9 @@
         const supabaseDB = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let doacoes = [];
+        let saidas = [];
+        let saldosMensais = [];
+        const SENHA_ADMIN = '0016275784390';
 
         // Carregar doações do Supabase
         async function carregarDoacoes() {
@@ -373,6 +602,170 @@
             loadingEl.style.display = 'none';
             atualizarEstatisticas();
             renderizarDoacoes();
+        }
+
+        // Carregar saídas do Supabase
+        async function carregarSaidas() {
+            try {
+                const { data, error } = await supabaseDB
+                    .from('saidas_sbe')
+                    .select('*')
+                    .order('criado_em', { ascending: true });
+
+                if (!error && data) {
+                    saidas = data;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar saídas:', error);
+            }
+        }
+
+        // Carregar saldos mensais
+        async function carregarSaldosMensais() {
+            try {
+                const { data, error } = await supabaseDB
+                    .from('saldos_mensais_sbe')
+                    .select('*')
+                    .order('ano', { ascending: true })
+                    .order('mes', { ascending: true });
+
+                if (!error && data) {
+                    saldosMensais = data;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar saldos:', error);
+            }
+        }
+
+        // Registrar saída
+        async function registrarSaida(event) {
+            event.preventDefault();
+
+            const mes = parseInt(document.getElementById('mesSelect').value);
+            const ano = parseInt(document.getElementById('anoSelect').value);
+
+            if (!mes || !ano) {
+                alert('⚠️ Selecione o mês e ano antes de registrar uma saída!');
+                return;
+            }
+
+            const saida = {
+                numero_documento: document.getElementById('numeroDocumento').value,
+                descricao: document.getElementById('descricaoSaida').value,
+                valor: parseFloat(document.getElementById('valorSaida').value),
+                categoria: document.getElementById('categoriaSaida').value,
+                observacao: document.getElementById('observacaoSaida').value || null,
+                ano: ano,
+                mes: mes,
+                criado_em: new Date().toISOString()
+            };
+
+            try {
+                const { data, error } = await supabaseDB
+                    .from('saidas_sbe')
+                    .insert([saida])
+                    .select();
+
+                if (error) {
+                    alert('❌ Erro ao registrar saída: ' + error.message);
+                } else {
+                    alert('✅ Saída registrada com sucesso!');
+                    document.getElementById('formSaida').reset();
+                    await carregarSaidas();
+                    await atualizarSaldoMensal(ano, mes);
+                    atualizarExtratoMensal();
+                }
+            } catch (error) {
+                alert('❌ Erro: ' + error.message);
+            }
+        }
+
+        // Deletar saída (com proteção por senha)
+        async function deletarSaida(id) {
+            const senha = prompt('🔒 Digite a senha de administrador para deletar:');
+            
+            if (senha !== SENHA_ADMIN) {
+                alert('❌ Senha incorreta! Operação cancelada.');
+                return;
+            }
+
+            if (!confirm('⚠️ Tem certeza que deseja deletar esta saída?')) {
+                return;
+            }
+
+            try {
+                const saidaParaDeletar = saidas.find(s => s.id === id);
+                
+                const { error } = await supabaseDB
+                    .from('saidas_sbe')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) {
+                    alert('❌ Erro ao deletar: ' + error.message);
+                } else {
+                    alert('✅ Saída deletada com sucesso!');
+                    await carregarSaidas();
+                    await atualizarSaldoMensal(saidaParaDeletar.ano, saidaParaDeletar.mes);
+                    atualizarExtratoMensal();
+                }
+            } catch (error) {
+                alert('❌ Erro: ' + error.message);
+            }
+        }
+
+        // Atualizar saldo mensal
+        async function atualizarSaldoMensal(ano, mes) {
+            // Calcular saldo anterior (mês anterior)
+            let saldoInicial = 0;
+            const mesAnterior = mes === 1 ? 12 : mes - 1;
+            const anoAnterior = mes === 1 ? ano - 1 : ano;
+            
+            const saldoMesAnterior = saldosMensais.find(s => s.ano === anoAnterior && s.mes === mesAnterior);
+            if (saldoMesAnterior) {
+                saldoInicial = saldoMesAnterior.saldo_final;
+            }
+
+            // Calcular entradas e saídas do mês
+            const entradasMes = doacoes
+                .filter(d => d.ano === ano && d.mes === mes && (d.tipo_doacao === 'valor' || d.tipo_doacao === 'pix'))
+                .reduce((sum, d) => sum + (parseFloat(d.valor) || 0), 0);
+
+            const saidasMes = saidas
+                .filter(s => s.ano === ano && s.mes === mes)
+                .reduce((sum, s) => sum + (parseFloat(s.valor) || 0), 0);
+
+            const saldoFinal = saldoInicial + entradasMes - saidasMes;
+
+            // Atualizar ou inserir saldo mensal
+            const saldoExistente = saldosMensais.find(s => s.ano === ano && s.mes === mes);
+
+            const dadosSaldo = {
+                ano,
+                mes,
+                saldo_inicial: saldoInicial,
+                total_entradas: entradasMes,
+                total_saidas: saidasMes,
+                saldo_final: saldoFinal,
+                atualizado_em: new Date().toISOString()
+            };
+
+            try {
+                if (saldoExistente) {
+                    await supabaseDB
+                        .from('saldos_mensais_sbe')
+                        .update(dadosSaldo)
+                        .eq('id', saldoExistente.id);
+                } else {
+                    await supabaseDB
+                        .from('saldos_mensais_sbe')
+                        .insert([dadosSaldo]);
+                }
+
+                await carregarSaldosMensais();
+            } catch (error) {
+                console.error('Erro ao atualizar saldo mensal:', error);
+            }
         }
 
         function atualizarEstatisticas() {
@@ -450,6 +843,153 @@
             });
         }
 
+        // Renderizar extrato bancário do mês selecionado
+        function atualizarExtratoMensal() {
+            const mes = parseInt(document.getElementById('mesSelect').value);
+            const ano = parseInt(document.getElementById('anoSelect').value);
+            const container = document.getElementById('extratoContainer');
+            const loadingExtrato = document.getElementById('loadingExtrato');
+
+            if (!mes || !ano) {
+                container.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Selecione o mês e ano para visualizar o extrato.</p>';
+                loadingExtrato.style.display = 'none';
+                return;
+            }
+
+            loadingExtrato.style.display = 'none';
+
+            // Obter saldo do mês anterior
+            const mesAnterior = mes === 1 ? 12 : mes - 1;
+            const anoAnterior = mes === 1 ? ano - 1 : ano;
+            const saldoMesAnterior = saldosMensais.find(s => s.ano === anoAnterior && s.mes === mesAnterior);
+            const saldoInicial = saldoMesAnterior ? saldoMesAnterior.saldo_final : 0;
+
+            // Filtrar entradas e saídas do mês
+            const entradasMes = doacoes.filter(d => d.ano === ano && d.mes === mes && (d.tipo_doacao === 'valor' || d.tipo_doacao === 'pix'));
+            const saidasMes = saidas.filter(s => s.ano === ano && s.mes === mes);
+
+            // Combinar e ordenar por data
+            let transacoes = [];
+            
+            entradasMes.forEach(d => {
+                transacoes.push({
+                    tipo: 'entrada',
+                    data: new Date(d.criado_em),
+                    descricao: `${d.doador_nome} - ${d.referente_a || 'Doação'}`,
+                    valor: parseFloat(d.valor),
+                    documento: d.numero_recibo,
+                    id: d.id
+                });
+            });
+
+            saidasMes.forEach(s => {
+                transacoes.push({
+                    tipo: 'saida',
+                    data: new Date(s.criado_em),
+                    descricao: `${s.descricao}${s.categoria ? ' (' + s.categoria + ')' : ''}`,
+                    valor: parseFloat(s.valor),
+                    documento: s.numero_documento,
+                    observacao: s.observacao,
+                    id: s.id
+                });
+            });
+
+            transacoes.sort((a, b) => a.data - b.data);
+
+            // Calcular saldos progressivos
+            let saldoAtual = saldoInicial;
+            let totalEntradas = 0;
+            let totalSaidas = 0;
+
+            transacoes.forEach(t => {
+                if (t.tipo === 'entrada') {
+                    saldoAtual += t.valor;
+                    totalEntradas += t.valor;
+                } else {
+                    saldoAtual -= t.valor;
+                    totalSaidas += t.valor;
+                }
+                t.saldo = saldoAtual;
+            });
+
+            // Atualizar cards de saldo
+            document.getElementById('saldoInicial').textContent = 'R$ ' + saldoInicial.toFixed(2).replace('.', ',');
+            document.getElementById('totalSaidas').textContent = 'R$ ' + totalSaidas.toFixed(2).replace('.', ',');
+            document.getElementById('saldoFinal').textContent = 'R$ ' + saldoAtual.toFixed(2).replace('.', ',');
+
+            // Renderizar tabela
+            let html = `
+                <div class="extrato-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Documento</th>
+                                <th>Descrição</th>
+                                <th style="text-align: right;">Entrada</th>
+                                <th style="text-align: right;">Saída</th>
+                                <th style="text-align: right;">Saldo</th>
+                                <th style="text-align: center;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            // Linha de saldo inicial
+            html += `
+                <tr class="extrato-saldo">
+                    <td colspan="5"><strong>SALDO INICIAL DO MÊS</strong></td>
+                    <td style="text-align: right;"><strong>R$ ${saldoInicial.toFixed(2).replace('.', ',')}</strong></td>
+                    <td></td>
+                </tr>
+            `;
+
+            // Transações
+            transacoes.forEach(t => {
+                const dataFormatada = t.data.toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                const entrada = t.tipo === 'entrada' ? `<span class="extrato-entrada">R$ ${t.valor.toFixed(2).replace('.', ',')}</span>` : '-';
+                const saida = t.tipo === 'saida' ? `<span class="extrato-saida">R$ ${t.valor.toFixed(2).replace('.', ',')}</span>` : '-';
+                const btnDeletar = t.tipo === 'saida' ? `<button class="btn-deletar" onclick="deletarSaida(${t.id})">🗑️ Deletar</button>` : '';
+
+                html += `
+                    <tr>
+                        <td>${dataFormatada}</td>
+                        <td>${t.documento}</td>
+                        <td>${t.descricao}${t.observacao ? '<br><small style="color: #666;">' + t.observacao + '</small>' : ''}</td>
+                        <td style="text-align: right;">${entrada}</td>
+                        <td style="text-align: right;">${saida}</td>
+                        <td style="text-align: right;">R$ ${t.saldo.toFixed(2).replace('.', ',')}</td>
+                        <td style="text-align: center;">${btnDeletar}</td>
+                    </tr>
+                `;
+            });
+
+            // Linha de saldo final
+            html += `
+                <tr class="extrato-saldo">
+                    <td colspan="3"><strong>TOTAIS DO MÊS</strong></td>
+                    <td style="text-align: right;"><strong class="extrato-entrada">R$ ${totalEntradas.toFixed(2).replace('.', ',')}</strong></td>
+                    <td style="text-align: right;"><strong class="extrato-saida">R$ ${totalSaidas.toFixed(2).replace('.', ',')}</strong></td>
+                    <td style="text-align: right;"><strong>R$ ${saldoAtual.toFixed(2).replace('.', ',')}</strong></td>
+                    <td></td>
+                </tr>
+            `;
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
         // Preencher seletores de mês e ano
         function preencherSeletores() {
             const mesSelect = document.getElementById('mesSelect');
@@ -517,6 +1057,10 @@
                     // Mês fechado - esconder botão parcial
                     btnPDFParcial.style.display = 'none';
                 }
+
+                // Atualizar saldo e extrato do mês selecionado
+                atualizarSaldoMensal(ano, mes);
+                atualizarExtratoMensal();
             } else {
                 btnPDF.disabled = true;
                 btnPDF.textContent = '📄 Relatório Completo';
@@ -752,9 +1296,20 @@
             doc.save(nomeArquivo);
         }
 
-        // Inicializar
-        preencherSeletores();
-        carregarDoacoes();
+        // Inicializar aplicação
+        async function inicializar() {
+            preencherSeletores();
+            await carregarDoacoes();
+            await carregarSaidas();
+            await carregarSaldosMensais();
+            atualizarExtratoMensal();
+
+            // Event listener para formulário de saída
+            document.getElementById('formSaida').addEventListener('submit', registrarSaida);
+        }
+
+        // Executar inicialização quando a página carregar
+        inicializar();
     </script>
 </body>
 </html>
