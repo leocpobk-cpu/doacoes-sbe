@@ -896,18 +896,19 @@
 
             transacoes.sort((a, b) => a.data - b.data);
 
-            // Calcular saldos progressivos
+            // Calcular totais de entradas e saídas
+            const totalEntradas = entradasMes.reduce((sum, d) => sum + parseFloat(d.valor || 0), 0);
+            const totalSaidas = saidasMes.reduce((sum, s) => sum + parseFloat(s.valor || 0), 0);
+            const saldoFinalCalculado = saldoInicial + totalEntradas - totalSaidas;
+
+            // Calcular saldos progressivos para cada transação
             let saldoAtual = saldoInicial;
-            let totalEntradas = 0;
-            let totalSaidas = 0;
 
             transacoes.forEach(t => {
                 if (t.tipo === 'entrada') {
                     saldoAtual += t.valor;
-                    totalEntradas += t.valor;
                 } else {
                     saldoAtual -= t.valor;
-                    totalSaidas += t.valor;
                 }
                 t.saldo = saldoAtual;
             });
@@ -915,7 +916,7 @@
             // Atualizar cards de saldo
             document.getElementById('saldoInicial').textContent = 'R$ ' + saldoInicial.toFixed(2).replace('.', ',');
             document.getElementById('totalSaidas').textContent = 'R$ ' + totalSaidas.toFixed(2).replace('.', ',');
-            document.getElementById('saldoFinal').textContent = 'R$ ' + saldoAtual.toFixed(2).replace('.', ',');
+            document.getElementById('saldoFinal').textContent = 'R$ ' + saldoFinalCalculado.toFixed(2).replace('.', ',');
 
             // Renderizar tabela
             let html = `
@@ -976,7 +977,7 @@
                     <td colspan="3"><strong>TOTAIS DO MÊS</strong></td>
                     <td style="text-align: right;"><strong class="extrato-entrada">R$ ${totalEntradas.toFixed(2).replace('.', ',')}</strong></td>
                     <td style="text-align: right;"><strong class="extrato-saida">R$ ${totalSaidas.toFixed(2).replace('.', ',')}</strong></td>
-                    <td style="text-align: right;"><strong>R$ ${saldoAtual.toFixed(2).replace('.', ',')}</strong></td>
+                    <td style="text-align: right;"><strong>R$ ${saldoFinalCalculado.toFixed(2).replace('.', ',')}</strong></td>
                     <td></td>
                 </tr>
             `;
