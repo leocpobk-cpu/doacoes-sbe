@@ -627,13 +627,9 @@
                 const infoDinheiro = document.getElementById('infoDinheiro');
 
                 if (tipo === 'cesta_basica') {
-                    campoValor.style.display = 'none';
-                    campoQuantidade.style.display = 'block';
-                    campoComprovante.style.display = 'none';
-                    infoPix.style.display = 'none';
-                    infoDinheiro.style.display = 'none';
-                    document.getElementById('campoEntregaCesta').style.display = 'block';
-                    document.getElementById('valor').required = false;
+                    // Redirecionar para a página de doação de cestas
+                    window.location.href = 'cestas.html';
+                    return;
                 } else if (tipo === 'pix') {
                     campoValor.style.display = 'block';
                     campoQuantidade.style.display = 'none';
