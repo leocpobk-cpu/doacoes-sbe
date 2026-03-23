@@ -716,6 +716,7 @@
                 const { data, error } = await supabaseDB
                     .from('doacoes_sbe')
                     .select('*')
+                    .neq('tipo_doacao', 'cesta_basica')
                     .order('numero_recibo', { ascending: true });
 
                 if (!error && data) {
@@ -1195,16 +1196,14 @@
 
             let yPos = 55;
 
-            // Separar doações por tipo (CESTAS NÃO ENTRAM NO TOTAL DE VALORES)
+            // Filtrar apenas doações em dinheiro/PIX (cestas básicas estão em sistema separado)
             const doacoesDinheiro = doacoesMes.filter(d => d.tipo_doacao === 'valor' || d.tipo_doacao === 'pix');
-            const doacoesCestas = doacoesMes.filter(d => d.tipo_doacao === 'cesta_basica');
 
             // Filtrar saídas do mês
             const saidasMes = saidas.filter(s => s.ano === ano && s.mes === mes);
 
-            // Totalizadores (CESTAS SEPARADAS)
+            // Totalizadores
             const totalDinheiro = doacoesDinheiro.reduce((sum, d) => sum + (parseFloat(d.valor) || 0), 0);
-            const totalCestas = doacoesCestas.reduce((sum, d) => sum + (parseInt(d.quantidade) || 0), 0);
             const totalSaidas = saidasMes.reduce((sum, s) => sum + (parseFloat(s.valor) || 0), 0);
             const saldoFinal = totalDinheiro - totalSaidas;
 
@@ -1249,53 +1248,6 @@
                 yPos += 3;
                 doc.setFont(undefined, 'bold');
                 doc.text(`Total em Dinheiro/PIX: R$ ${totalDinheiro.toFixed(2).replace('.', ',')}`, 18, yPos);
-                doc.setFont(undefined, 'normal');
-                yPos += 10;
-            }
-
-            // Seção: Cestas Básicas
-            if (doacoesCestas.length > 0) {
-                if (yPos > 250) { // Nova página
-                    doc.addPage();
-                    yPos = 20;
-                }
-
-                doc.setFontSize(13);
-                doc.setFont(undefined, 'bold');
-                doc.text('DOACOES DE CESTAS BASICAS', 15, yPos);
-                yPos += 8;
-
-                doc.setFontSize(9);
-                doc.setFont(undefined, 'normal');
-
-                doacoesCestas.forEach((doacao, index) => {
-                    if (yPos > 270) {
-                        doc.addPage();
-                        yPos = 20;
-                    }
-
-                    const quantidade = `${doacao.quantidade} cesta${doacao.quantidade > 1 ? 's' : ''}`;
-                    const nome = `${index + 1}. ${doacao.doador_nome}`;
-                    
-                    // Calcular espaço e adicionar pontos
-                    const espacoDisponivel = 110;
-                    const pontilhado = '.'.repeat(Math.max(0, Math.floor((espacoDisponivel - doc.getTextWidth(nome)) / doc.getTextWidth('.'))));
-                    
-                    doc.text(`${nome} ${pontilhado} ${quantidade}`, 18, yPos);
-                    yPos += 5;
-
-                    if (doacao.observacao) {
-                        doc.setFont(undefined, 'italic');
-                        const obs = doacao.observacao.substring(0, 60); // Limitar tamanho
-                        doc.text(`   ${obs}`, 20, yPos);
-                        doc.setFont(undefined, 'normal');
-                        yPos += 5;
-                    }
-                });
-
-                yPos += 3;
-                doc.setFont(undefined, 'bold');
-                doc.text(`Total de Cestas: ${totalCestas}`, 18, yPos);
                 doc.setFont(undefined, 'normal');
                 yPos += 10;
             }
