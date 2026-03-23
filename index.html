@@ -694,8 +694,9 @@
 
             listaDoacoes.innerHTML = '';
 
-            // Pegar apenas as últimas 10 doações (ordem decrescente - mais recentes primeiro)
-            // Os dados já vêm ordenados do banco (criado_em DESC)
+            // Pegar apenas as últimas 10 doações
+            // Os dados já vêm ordenados por ID decrescente (mais recentes primeiro)
+            // ID 27 = Doação #1, ID 26 = Doação #2, etc.
             const ultimas10 = doacoes.slice(0, 10);
 
             ultimas10.forEach((doacao, index) => {
@@ -854,7 +855,7 @@
                 const { data, error } = await supabaseDB
                     .from('doacoes_sbe')
                     .select('*')
-                    .order('criado_em', { ascending: false });
+                    .order('id', { ascending: false });
 
                 if (!error && data) {
                     doacoes = data;
