@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Cestas Básicas - SBE</title>
+    
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header .subtitle {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+
+        .icon-header {
+            font-size: 4em;
+            margin-bottom: 10px;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .btn-voltar {
+            display: inline-block;
+            padding: 12px 25px;
+            background: #757575;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            transition: all 0.3s;
+        }
+
+        .btn-voltar:hover {
+            background: #616161;
+            transform: translateX(-5px);
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+            border-radius: 10px;
+            padding: 25px;
+            text-align: center;
+            border-left: 4px solid #FF9800;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-card .valor {
+            font-size: 3em;
+            font-weight: 700;
+            color: #FF9800;
+        }
+
+        .filtro-mes {
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filtro-mes label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .filtro-mes select {
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        .lista-doacoes {
+            list-style: none;
+        }
+
+        .doacao-item {
+            background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #FF9800;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+
+        .doacao-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .doacao-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .doacao-numero {
+            font-weight: 700;
+            color: #E65100;
+            font-size: 0.9em;
+        }
+
+        .doacao-data {
+            color: #999;
+            font-size: 0.85em;
+        }
+
+        .doacao-doador {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.2em;
+            margin: 8px 0;
+        }
+
+        .doacao-quantidade {
+            font-size: 2em;
+            font-weight: 700;
+            color: #FF9800;
+            margin: 10px 0;
+        }
+
+        .doacao-valor {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #4caf50;
+            margin: 8px 0;
+        }
+
+        .doacao-telefone {
+            color: #666;
+            font-size: 0.9em;
+            margin: 5px 0;
+        }
+
+        .doacao-observacao {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            color: #555;
+            font-size: 0.9em;
+            font-style: italic;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 5em;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .footer {
+            background: linear-gradient(135deg, #424242 0%, #212121 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .footer-suporte {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .footer-suporte strong {
+            color: #FF9800;
+        }
+
+        .footer-suporte a {
+            color: #FFE0B2;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .footer-suporte a:hover {
+            color: #FF9800;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .icon-header {
+                font-size: 3em;
+            }
+
+            .content {
+                padding: 30px 20px;
+            }
+
+            .filtro-mes {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filtro-mes select {
+                width: 100%;
+            }
+
+            .stat-card .valor {
+                font-size: 2.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="icon-header">📊</div>
+            <h1>Relatório de Cestas Básicas</h1>
+            <div class="subtitle">Transparência em cada doação recebida</div>
+        </div>
+
+        <div class="content">
+            <a href="cestas.html" class="btn-voltar">← Voltar para Doação</a>
+
+            <!-- Filtro de Mês -->
+            <div class="filtro-mes">
+                <label for="mesSelect">📅 Filtrar por Mês:</label>
+                <select id="mesSelect" onchange="atualizarRelatorio()">
+                    <option value="">Todos os Meses</option>
+                </select>
+                <select id="anoSelect" onchange="atualizarRelatorio()">
+                    <option value="">Todos os Anos</option>
+                </select>
+            </div>
+
+            <!-- Cards de Estatísticas -->
+            <div class="stats-container">
+                <div class="stat-card">
+                    <h3>Total de Cestas</h3>
+                    <div class="valor" id="totalCestas">0</div>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Total de Doadores</h3>
+                    <div class="valor" id="totalDoadores">0</div>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Este Mês</h3>
+                    <div class="valor" id="cestasMes">0</div>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Total Arrecadado</h3>
+                    <div class="valor" id="totalArrecadado">R$ 0,00</div>
+                </div>
+            </div>
+
+            <!-- Loading -->
+            <div id="loading" class="loading">Carregando doações...</div>
+
+            <!-- Lista de Doações -->
+            <ul class="lista-doacoes" id="listaDoacoes"></ul>
+
+            <!-- Estado Vazio -->
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <div class="empty-state-icon">📦</div>
+                <h2>Nenhuma doação encontrada</h2>
+                <p>Ainda não há doações de cestas básicas registradas para este período.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="footer-suporte">
+            <strong>Suporte Técnico:</strong> Leonardo Oliveira - 
+            <a href="https://wa.me/5565981346852" target="_blank">65 98134-6852</a> (WhatsApp)
+        </div>
+    </div>
+
+    <script>
+        // Configuração do Supabase
+        const SUPABASE_URL = 'https://fwmlimudntlrkeukvyjg.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_gx8_WdV2x6n9FoZooniJCQ_s0hWGsiW';
+        const supabaseDB = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let doacoes = [];
+
+        // Carregar doações
+        async function carregarDoacoes() {
+            try {
+                const { data, error } = await supabaseDB
+                    .from('doacoes_sbe')
+                    .select('*')
+                    .eq('tipo_doacao', 'cesta_basica')
+                    .order('criado_em', { ascending: false });
+
+                if (error) throw error;
+
+                doacoes = data || [];
+                preencherFiltros();
+                atualizarRelatorio();
+
+            } catch (error) {
+                console.error('Erro ao carregar doações:', error);
+                document.getElementById('loading').innerHTML = '❌ Erro ao carregar dados. Tente recarregar a página.';
+            }
+        }
+
+        // Preencher seletores de filtro
+        function preencherFiltros() {
+            const mesSelect = document.getElementById('mesSelect');
+            const anoSelect = document.getElementById('anoSelect');
+
+            const meses = [
+                'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+            ];
+
+            // Limpar e adicionar opção "Todos"
+            mesSelect.innerHTML = '<option value="">Todos os Meses</option>';
+            anoSelect.innerHTML = '<option value="">Todos os Anos</option>';
+
+            // Obter meses e anos únicos das doações
+            const mesesUnicos = new Set();
+            const anosUnicos = new Set();
+
+            doacoes.forEach(d => {
+                if (d.mes) mesesUnicos.add(d.mes);
+                if (d.ano) anosUnicos.add(d.ano);
+            });
+
+            // Preencher meses
+            Array.from(mesesUnicos).sort((a, b) => a - b).forEach(mes => {
+                const option = document.createElement('option');
+                option.value = mes;
+                option.textContent = meses[mes - 1];
+                mesSelect.appendChild(option);
+            });
+
+            // Preencher anos
+            Array.from(anosUnicos).sort((a, b) => b - a).forEach(ano => {
+                const option = document.createElement('option');
+                option.value = ano;
+                option.textContent = ano;
+                anoSelect.appendChild(option);
+            });
+
+            // Selecionar mês e ano atuais
+            const dataAtual = new Date();
+            mesSelect.value = dataAtual.getMonth() + 1;
+            anoSelect.value = dataAtual.getFullYear();
+        }
+
+        // Atualizar relatório
+        function atualizarRelatorio() {
+            const mesFiltro = document.getElementById('mesSelect').value;
+            const anoFiltro = document.getElementById('anoSelect').value;
+
+            // Filtrar doações
+            let doacoesFiltradas = doacoes;
+
+            if (anoFiltro) {
+                doacoesFiltradas = doacoesFiltradas.filter(d => d.ano == anoFiltro);
+            }
+
+            if (mesFiltro) {
+                doacoesFiltradas = doacoesFiltradas.filter(d => d.mes == mesFiltro);
+            }
+
+            // Calcular estatísticas
+            const totalCestas = doacoesFiltradas.reduce((sum, d) => sum + (parseInt(d.quantidade) || 0), 0);
+            const totalDoadores = doacoesFiltradas.length;
+            const totalArrecadado = doacoesFiltradas.reduce((sum, d) => sum + (parseFloat(d.valor) || 0), 0);
+
+            // Estatísticas do mês atual
+            const dataAtual = new Date();
+            const mesAtual = dataAtual.getMonth() + 1;
+            const anoAtual = dataAtual.getFullYear();
+            const cestasMesAtual = doacoes
+                .filter(d => d.ano === anoAtual && d.mes === mesAtual)
+                .reduce((sum, d) => sum + (parseInt(d.quantidade) || 0), 0);
+
+            // Atualizar cards
+            document.getElementById('totalCestas').textContent = totalCestas;
+            document.getElementById('totalDoadores').textContent = totalDoadores;
+            document.getElementById('cestasMes').textContent = cestasMesAtual;
+            document.getElementById('totalArrecadado').textContent = 'R$ ' + totalArrecadado.toFixed(2).replace('.', ',');
+
+            // Renderizar lista
+            renderizarDoacoes(doacoesFiltradas);
+
+            // Esconder loading
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        // Renderizar doações
+        function renderizarDoacoes(doacoesFiltradas) {
+            const lista = document.getElementById('listaDoacoes');
+            const emptyState = document.getElementById('emptyState');
+
+            if (doacoesFiltradas.length === 0) {
+                lista.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+
+            const html = doacoesFiltradas.map(doacao => {
+                const data = new Date(doacao.criado_em);
+                const dataFormatada = data.toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+
+                const horario = data.toLocaleTimeString('pt-BR', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                const quantidade = parseInt(doacao.quantidade) || 0;
+                const textoQuantidade = quantidade === 1 ? '1 cesta' : `${quantidade} cestas`;
+                
+                const valor = parseFloat(doacao.valor) || 0;
+                const valorFormatado = valor > 0 ? `R$ ${valor.toFixed(2).replace('.', ',')}` : null;
+
+                // Ícone de anexo
+                const temAnexo = doacao.anexo_url && doacao.anexo_url.trim() !== '';
+                const iconAnexo = temAnexo 
+                    ? `<span style="cursor: pointer; color: #FF9800; font-size: 1.2em;" onclick="visualizarAnexo('${doacao.anexo_url}', '${doacao.anexo_nome || 'Comprovante'}')">📎</span>` 
+                    : '';
+                const btnAnexo = `<button style="margin-top: 8px; padding: 6px 12px; background: #4caf50; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 0.85em;" onclick="anexarComprovante(${doacao.id}, 'doacao')">📎 ${temAnexo ? 'Substituir' : 'Anexar'} Comprovante</button>`;
+
+                return `
+                    <li class="doacao-item">
+                        <div class="doacao-header">
+                            <div class="doacao-numero">Recibo: ${doacao.numero_recibo} ${iconAnexo}</div>
+                            <div class="doacao-data">${dataFormatada} às ${horario}</div>
+                        </div>
+                        <div class="doacao-doador">🙏 ${doacao.doador_nome}</div>
+                        <div class="doacao-quantidade">🛒 ${textoQuantidade}</div>
+                        ${valorFormatado ? `<div class="doacao-valor">💵 ${valorFormatado}</div>` : ''}
+                        ${doacao.telefone ? `<div class="doacao-telefone">📱 ${doacao.telefone}</div>` : ''}
+                        ${doacao.observacao ? `<div class="doacao-observacao">"${doacao.observacao}"</div>` : ''}
+                        ${btnAnexo}
+                    </li>
+                `;
+            }).join('');
+
+            lista.innerHTML = html;
+        }
+
+        // Visualizar anexo (comprovante)
+        function visualizarAnexo(url, nome) {
+            const modal = document.getElementById('modalAnexo');
+            const imagem = document.getElementById('imagemAnexo');
+            const iframe = document.getElementById('pdfAnexo');
+            const titulo = document.getElementById('tituloModalAnexo');
+            
+            titulo.textContent = nome || 'Comprovante';
+            
+            // Verificar se é PDF ou imagem
+            if (url.toLowerCase().endsWith('.pdf')) {
+                imagem.style.display = 'none';
+                iframe.style.display = 'block';
+                iframe.src = url;
+            } else {
+                iframe.style.display = 'none';
+                imagem.style.display = 'block';
+                imagem.src = url;
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        // Fechar modal de anexo
+        function fecharModalAnexo() {
+            const modal = document.getElementById('modalAnexo');
+            const imagem = document.getElementById('imagemAnexo');
+            const iframe = document.getElementById('pdfAnexo');
+            
+            modal.style.display = 'none';
+            imagem.src = '';
+            iframe.src = '';
+        }
+
+        // Anexar comprovante a uma doação existente
+        async function anexarComprovante(doacaoId, tipo) {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*,.pdf';
+            
+            input.onchange = async (e) => {
+                const arquivo = e.target.files[0];
+                if (!arquivo) return;
+                
+                if (arquivo.size > 5 * 1024 * 1024) {
+                    alert('❌ Arquivo muito grande! O tamanho máximo é 5MB.');
+                    return;
+                }
+                
+                try {
+                    const nomeArquivo = `${Date.now()}_${arquivo.name}`;
+                    const caminhoArquivo = `cestas/${doacaoId}/${nomeArquivo}`;
+                    
+                    const { error: uploadError } = await supabaseDB.storage
+                        .from('anexos-sbe')
+                        .upload(caminhoArquivo, arquivo);
+                    
+                    if (uploadError && uploadError.message.includes('not found')) {
+                        await supabaseDB.storage.createBucket('anexos-sbe', { public: true });
+                        await supabaseDB.storage.from('anexos-sbe').upload(caminhoArquivo, arquivo);
+                    } else if (uploadError) {
+                        throw uploadError;
+                    }
+                    
+                    const { data: urlData } = supabaseDB.storage
+                        .from('anexos-sbe')
+                        .getPublicUrl(caminhoArquivo);
+                    
+                    await supabaseDB
+                        .from('doacoes_sbe')
+                        .update({
+                            anexo_url: urlData.publicUrl,
+                            anexo_nome: arquivo.name
+                        })
+                        .eq('id', doacaoId);
+                    
+                    alert('✅ Comprovante anexado com sucesso!');
+                    await carregarDoacoes();
+                    
+                } catch (error) {
+                    console.error('Erro ao anexar comprovante:', error);
+                    alert('❌ Erro ao anexar comprovante. Por favor, tente novamente.');
+                }
+            };
+            
+            input.click();
+        }
+
+        // Inicializar
+        carregarDoacoes();
+    </script>
+
+    <!-- Modal para visualizar anexos -->
+    <div id="modalAnexo" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); align-items: center; justify-content: center;" onclick="if(event.target.id === 'modalAnexo') fecharModalAnexo()">
+        <div style="position: relative; max-width: 90%; max-height: 80%;">
+            <button onclick="fecharModalAnexo()" style="position: absolute; top: -40px; right: 0; color: #fff; font-size: 35px; font-weight: bold; cursor: pointer; background: none; border: none;">&times;</button>
+            <h3 id="tituloModalAnexo" style="color: white; text-align: center; margin-bottom: 20px;">Comprovante</h3>
+            <img id="imagemAnexo" src="" style="max-width: 100%; max-height: 80vh; display: none;">
+            <iframe id="pdfAnexo" src="" style="width: 90vw; height: 80vh; border: none; display: none;"></iframe>
+        </div>
+    </div>
+</body>
+</html>
