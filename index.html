@@ -581,8 +581,7 @@
             <div class="section">
                 <h2 class="section-title">📋 Últimas 10 Doações</h2>
                 <p style="color: #666; font-size: 0.9em; margin-bottom: 15px;">
-                    ℹ️ Por questões de privacidade, os nomes dos doadores não são exibidos aqui. 
-                    Para ver o relatório completo com comprovantes, acesse a <a href="relatorio.html" style="color: #4a90e2; text-decoration: none; font-weight: 600;">página de relatórios</a>.
+                    ℹ️ Por questões de privacidade, os nomes dos doadores não são exibidos aqui.
                 </p>
                 <ul class="lista-doacoes" id="listaDoacoes">
                     <li style="text-align: center; padding: 20px; color: #999;">Nenhuma doação registrada ainda.</li>
@@ -700,7 +699,8 @@
             listaDoacoes.innerHTML = '';
 
             // Pegar apenas as últimas 10 doações (ordem decrescente - mais recentes primeiro)
-            const ultimas10 = doacoes.slice().reverse().slice(0, 10);
+            // Os dados já vêm ordenados do banco (criado_em DESC)
+            const ultimas10 = doacoes.slice(0, 10);
 
             ultimas10.forEach((doacao, index) => {
                 const li = document.createElement('li');
