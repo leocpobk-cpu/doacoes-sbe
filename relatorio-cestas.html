@@ -78,32 +78,36 @@
 
         .stats-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
         }
 
         .stat-card {
             background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
             border-radius: 10px;
-            padding: 25px;
+            padding: 20px 15px;
             text-align: center;
             border-left: 4px solid #FF9800;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
         .stat-card h3 {
-            font-size: 0.9em;
+            font-size: 0.8em;
             color: #666;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
+            line-height: 1.2;
         }
 
         .stat-card .valor {
-            font-size: 3em;
+            font-size: 2.2em;
             font-weight: 700;
             color: #FF9800;
+            line-height: 1.1;
+            word-break: keep-all;
+            white-space: nowrap;
         }
 
         .filtro-mes {
@@ -317,8 +321,16 @@
                 width: 100%;
             }
 
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
             .stat-card .valor {
-                font-size: 2.5em;
+                font-size: 2em;
+            }
+
+            .stat-card h3 {
+                font-size: 0.75em;
             }
         }
     </style>
@@ -411,7 +423,8 @@
         // Configuração do Supabase
         const SUPABASE_URL = 'https://fwmlimudntlrkeukvyjg.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_gx8_WdV2x6n9FoZooniJCQ_s0hWGsiW';
-        const SENHA_ADMIN = '0016275784390';
+        const SENHA_ADMIN = '121212'; // Senha para acessar o relatório
+        const SENHA_DELETAR = '0016275784390'; // Senha para deletar registros
         const supabaseDB = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let doacoes = [];
@@ -613,7 +626,7 @@
         async function deletarDoacao(id, recibo) {
             const senha = prompt('🔒 Digite a senha de administrador para deletar:');
             
-            if (senha !== SENHA_ADMIN) {
+            if (senha !== SENHA_DELETAR) {
                 alert('❌ Senha incorreta! Operação cancelada.');
                 return;
             }

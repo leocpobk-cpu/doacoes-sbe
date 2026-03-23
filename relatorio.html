@@ -583,7 +583,24 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Tela de Login -->
+    <div id="telaLogin" style="display: flex; justify-content: center; align-items: center; min-height: 100vh;">
+        <div style="background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); text-align: center; max-width: 400px;">
+            <div style="font-size: 4em; margin-bottom: 20px;">🔒</div>
+            <h2 style="color: #FF9800; margin-bottom: 10px;">Área Restrita</h2>
+            <p style="color: #666; margin-bottom: 30px;">Este relatório é acessível apenas para administradores.</p>
+            <input type="password" id="senhaLogin" placeholder="Digite a senha de administrador" 
+                   style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 1em; margin-bottom: 15px;">
+            <button onclick="verificarSenhaLogin()" 
+                    style="width: 100%; padding: 12px; background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); color: white; border: none; border-radius: 8px; font-size: 1em; font-weight: 600; cursor: pointer;">
+                🔓 Entrar
+            </button>
+            <p id="erroLogin" style="color: #f44336; margin-top: 15px; display: none;">❌ Senha incorreta!</p>
+            <a href="index.html" style="display: inline-block; margin-top: 20px; color: #666; text-decoration: none;">← Voltar para Registro</a>
+        </div>
+    </div>
+
+    <div class="container" id="conteudoRelatorio" style="display: none;">
         <div class="header">
             <h1>📊 Relatório de Doações - SBE</h1>
             <div class="subtitle">Sociedade Beneficente Evangélica - IEAD Coophamil</div>
@@ -708,7 +725,8 @@
         let doacoes = [];
         let saidas = [];
         let saldosMensais = [];
-        const SENHA_ADMIN = '0016275784390';
+        const SENHA_ACESSO = '121212'; // Senha para acessar o relatório
+        const SENHA_DELETAR = '0016275784390'; // Senha para deletar registros
 
         // Carregar doações do Supabase
         async function carregarDoacoes() {
@@ -767,7 +785,7 @@
         async function deletarSaida(id) {
             const senha = prompt('🔒 Digite a senha de administrador para deletar:');
             
-            if (senha !== SENHA_ADMIN) {
+            if (senha !== SENHA_DELETAR) {
                 alert('❌ Senha incorreta! Operação cancelada.');
                 return;
             }
@@ -1632,8 +1650,34 @@
             document.getElementById('formSaida').addEventListener('submit', registrarSaida);
         }
 
-        // Executar inicialização quando a página carregar
-        inicializar();
+        // Verificar senha de login
+        function verificarSenhaLogin() {
+            const senha = document.getElementById('senhaLogin').value;
+            const erroLogin = document.getElementById('erroLogin');
+            
+            if (senha === SENHA_ACESSO) {
+                document.getElementById('telaLogin').style.display = 'none';
+                document.getElementById('conteudoRelatorio').style.display = 'block';
+                inicializar();
+            } else {
+                erroLogin.style.display = 'block';
+                document.getElementById('senhaLogin').value = '';
+                document.getElementById('senhaLogin').focus();
+            }
+        }
+
+        // Permitir Enter na senha
+        document.addEventListener('DOMContentLoaded', () => {
+            const senhaInput = document.getElementById('senhaLogin');
+            if (senhaInput) {
+                senhaInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        verificarSenhaLogin();
+                    }
+                });
+                senhaInput.focus();
+            }
+        });
     </script>
 
     <!-- Modal para visualizar anexos -->
