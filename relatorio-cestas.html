@@ -324,7 +324,24 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Tela de Login -->
+    <div id="telaLogin" style="display: flex; justify-content: center; align-items: center; min-height: 100vh;">
+        <div style="background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); text-align: center; max-width: 400px;">
+            <div style="font-size: 4em; margin-bottom: 20px;">🔒</div>
+            <h2 style="color: #FF9800; margin-bottom: 10px;">Área Restrita</h2>
+            <p style="color: #666; margin-bottom: 30px;">Este relatório é acessível apenas para administradores.</p>
+            <input type="password" id="senhaLogin" placeholder="Digite a senha de administrador" 
+                   style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 1em; margin-bottom: 15px;">
+            <button onclick="verificarSenhaLogin()" 
+                    style="width: 100%; padding: 12px; background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); color: white; border: none; border-radius: 8px; font-size: 1em; font-weight: 600; cursor: pointer;">
+                🔓 Entrar
+            </button>
+            <p id="erroLogin" style="color: #f44336; margin-top: 15px; display: none;">❌ Senha incorreta!</p>
+            <a href="cestas.html" style="display: inline-block; margin-top: 20px; color: #666; text-decoration: none;">← Voltar para Doação</a>
+        </div>
+    </div>
+
+    <div class="container" id="conteudoRelatorio" style="display: none;">
         <div class="header">
             <div class="icon-header">📊</div>
             <h1>Relatório de Cestas Básicas</h1>
@@ -381,12 +398,12 @@
                 <p>Ainda não há doações de cestas básicas registradas para este período.</p>
             </div>
         </div>
-    </div>
 
-    <div class="footer">
-        <div class="footer-suporte">
-            <strong>Suporte Técnico:</strong> Leonardo Oliveira - 
-            <a href="https://wa.me/5565981346852" target="_blank">65 98134-6852</a> (WhatsApp)
+        <div class="footer">
+            <div class="footer-suporte">
+                <strong>Suporte Técnico:</strong> Leonardo Oliveira - 
+                <a href="https://wa.me/5565981346852" target="_blank">65 98134-6852</a> (WhatsApp)
+            </div>
         </div>
     </div>
 
@@ -710,8 +727,34 @@
             input.click();
         }
 
-        // Inicializar
-        carregarDoacoes();
+        // Verificar senha de login
+        function verificarSenhaLogin() {
+            const senha = document.getElementById('senhaLogin').value;
+            const erroLogin = document.getElementById('erroLogin');
+            
+            if (senha === SENHA_ADMIN) {
+                document.getElementById('telaLogin').style.display = 'none';
+                document.getElementById('conteudoRelatorio').style.display = 'block';
+                carregarDoacoes();
+            } else {
+                erroLogin.style.display = 'block';
+                document.getElementById('senhaLogin').value = '';
+                document.getElementById('senhaLogin').focus();
+            }
+        }
+
+        // Permitir Enter na senha
+        document.addEventListener('DOMContentLoaded', () => {
+            const senhaInput = document.getElementById('senhaLogin');
+            if (senhaInput) {
+                senhaInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        verificarSenhaLogin();
+                    }
+                });
+                senhaInput.focus();
+            }
+        });
     </script>
 
     <!-- Modal para visualizar anexos -->
