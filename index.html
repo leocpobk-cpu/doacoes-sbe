@@ -197,83 +197,40 @@
         }
 
         .doacao-item {
-            background: #f9f9f9;
-            padding: 20px;
-            margin-bottom: 15px;
-            border-radius: 10px;
-            border-left: 4px solid #4a90e2;
-        }
-
-        .doacao-header {
             display: flex;
             justify-content: space-between;
-            align-items: start;
+            align-items: center;
+            background: #f9f9f9;
+            padding: 15px 20px;
             margin-bottom: 10px;
-            flex-wrap: wrap;
-            gap: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #4a90e2;
+            font-size: 1.05em;
         }
 
-        .doacao-numero {
-            font-size: 1.1em;
-            font-weight: 700;
-            color: #4a90e2;
+        .doacao-item:hover {
+            background: #f0f0f0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
-        .doacao-data {
-            color: #999;
-            font-size: 0.9em;
-        }
-
-        .doacao-doador {
-            font-weight: 600;
+        .doacao-numero-simples {
             color: #333;
-            font-size: 1.1em;
+            font-weight: 500;
+            flex: 1;
         }
 
-        .doacao-tipo {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 15px;
-            font-size: 0.85em;
-            font-weight: 600;
-            margin-top: 5px;
+        .doacao-pontos {
+            flex: 1;
+            border-bottom: 2px dotted #ccc;
+            margin: 0 15px;
+            height: 1px;
         }
 
-        .tipo-valor {
-            background: #c8e6c9;
-            color: #2e7d32;
-        }
-
-        .tipo-pix {
-            background: #b3e5fc;
-            color: #01579b;
-        }
-
-        .tipo-cesta {
-            background: #ffe0b2;
-            color: #e65100;
-        }
-
-        .doacao-valor {
-            font-size: 1.3em;
+        .doacao-valor-simples {
             font-weight: 700;
             color: #2e7d32;
-            margin: 10px 0;
-        }
-
-        .btn-recibo {
-            padding: 8px 16px;
-            background: #4a90e2;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9em;
-            margin-top: 10px;
-        }
-
-        .btn-recibo:hover {
-            background: #357abd;
+            font-size: 1.1em;
+            white-space: nowrap;
         }
 
         .resumo-box {
@@ -622,7 +579,11 @@
             </div>
 
             <div class="section">
-                <h2 class="section-title">📋 Histórico de Doações</h2>
+                <h2 class="section-title">📋 Últimas 10 Doações</h2>
+                <p style="color: #666; font-size: 0.9em; margin-bottom: 15px;">
+                    ℹ️ Por questões de privacidade, os nomes dos doadores não são exibidos aqui. 
+                    Para ver o relatório completo com comprovantes, acesse a <a href="relatorio.html" style="color: #4a90e2; text-decoration: none; font-weight: 600;">página de relatórios</a>.
+                </p>
                 <ul class="lista-doacoes" id="listaDoacoes">
                     <li style="text-align: center; padding: 20px; color: #999;">Nenhuma doação registrada ainda.</li>
                 </ul>
@@ -738,60 +699,27 @@
 
             listaDoacoes.innerHTML = '';
 
-            doacoes.slice().reverse().forEach(doacao => {
+            // Pegar apenas as últimas 10 doações (ordem decrescente - mais recentes primeiro)
+            const ultimas10 = doacoes.slice().reverse().slice(0, 10);
+
+            ultimas10.forEach((doacao, index) => {
                 const li = document.createElement('li');
                 li.className = 'doacao-item';
 
-                const data = new Date(doacao.criado_em).toLocaleDateString('pt-BR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-
-                const recibo = `#${doacao.id}`;
-
-                const tipoLabel = {
-                    'valor': 'Valor',
-                    'pix': 'PIX',
-                    'cesta_basica': 'Cesta Básica'
-                }[doacao.tipo_doacao];
-
-                const tipoClass = {
-                    'valor': 'tipo-valor',
-                    'pix': 'tipo-pix',
-                    'cesta_basica': 'tipo-cesta'
-                }[doacao.tipo_doacao];
-
+                // Determinar o valor a exibir
                 let valorDisplay = '';
                 if (doacao.tipo_doacao === 'cesta_basica') {
                     valorDisplay = `${doacao.quantidade} Cesta${doacao.quantidade > 1 ? 's' : ''}`;
                 } else {
-                    valorDisplay = `R$ ${parseFloat(doacao.valor || 0).toFixed(2).replace('.', ',')}`;
+                    const valor = parseFloat(doacao.valor || 0);
+                    valorDisplay = `R$ ${valor.toFixed(2).replace('.', ',')}`;
                 }
 
+                // Formato simples: Doação #1 .............. R$ 10,00
                 li.innerHTML = `
-                    <div class="doacao-header">
-                        <div class="doacao-numero">Doação ${recibo}</div>
-                        <div class="doacao-data">${data}</div>
-                    </div>
-                    <div>
-                        <div class="doacao-doador">${doacao.doador_nome}</div>
-                        <span class="doacao-tipo ${tipoClass}">${tipoLabel}</span>
-                    </div>
-                    <div class="doacao-valor">${valorDisplay}</div>
-                    ${doacao.referente_a ? `<div style="color: #666; margin: 5px 0;"><em>${doacao.referente_a}</em></div>` : ''}
-                    ${doacao.observacao ? `<div style="color: #666; margin: 5px 0;">Obs: ${doacao.observacao}</div>` : ''}
-                    ${doacao.imagem_comprovante ? `<div style="margin-top: 10px;"><img src="${doacao.imagem_comprovante}" style="max-width: 200px; border-radius: 5px; border: 1px solid #ddd;"></div>` : ''}
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <button class="btn-recibo" onclick="abrirRecibo('${doacao.id}')">
-                            📄 Ver Comprovante
-                        </button>
-                        ${adminLogado ? `<button class="btn-recibo" style="background: #e53935;" onclick="deletarDoacao('${doacao.id}', '${recibo}')">
-                            🗑️ Deletar
-                        </button>` : ''}
-                    </div>
+                    <span class="doacao-numero-simples">Doação #${index + 1}</span>
+                    <span class="doacao-pontos"></span>
+                    <span class="doacao-valor-simples">${valorDisplay}</span>
                 `;
 
                 listaDoacoes.appendChild(li);
