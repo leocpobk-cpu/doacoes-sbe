@@ -130,80 +130,122 @@
             cursor: pointer;
         }
 
-        .lista-doacoes {
-            list-style: none;
+        .tabela-container {
+            background: white;
+            border-radius: 10px;
+            overflow-x: auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
-        .doacao-item {
-            background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 15px;
-            border-left: 4px solid #FF9800;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        .tabela-container table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 900px;
+        }
+
+        .tabela-container th {
+            background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+            color: white;
+            padding: 15px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.95em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .tabela-container td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            color: #333;
+            vertical-align: top;
+        }
+
+        .tabela-container tr:hover {
+            background: #fff8f0;
+        }
+
+        .tabela-container tr:last-child td {
+            border-bottom: none;
+        }
+
+        .doador-cell {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .doador-cell .observacao {
+            font-size: 0.85em;
+            color: #666;
+            font-style: italic;
+            margin-top: 4px;
+            font-weight: normal;
+        }
+
+        .quantidade-cell {
+            font-weight: 700;
+            color: #FF9800;
+            white-space: nowrap;
+        }
+
+        .valor-cell {
+            font-weight: 700;
+            color: #4caf50;
+            white-space: nowrap;
+        }
+
+        .icon-anexo {
+            font-size: 1.3em;
+            cursor: pointer;
             transition: all 0.3s;
         }
 
-        .doacao-item:hover {
-            transform: translateX(5px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-
-        .doacao-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .doacao-numero {
-            font-weight: 700;
-            color: #E65100;
-            font-size: 0.9em;
-        }
-
-        .doacao-data {
-            color: #999;
-            font-size: 0.85em;
-        }
-
-        .doacao-doador {
-            font-weight: 600;
-            color: #333;
-            font-size: 1.2em;
-            margin: 8px 0;
-        }
-
-        .doacao-quantidade {
-            font-size: 2em;
-            font-weight: 700;
+        .icon-anexo.tem-anexo {
             color: #FF9800;
-            margin: 10px 0;
         }
 
-        .doacao-valor {
-            font-size: 1.5em;
-            font-weight: 700;
-            color: #4caf50;
-            margin: 8px 0;
+        .icon-anexo.tem-anexo:hover {
+            transform: scale(1.2);
         }
 
-        .doacao-telefone {
-            color: #666;
-            font-size: 0.9em;
-            margin: 5px 0;
+        .icon-anexo.sem-anexo {
+            color: #ccc;
+            opacity: 0.4;
+            cursor: default;
         }
 
-        .doacao-observacao {
-            background: white;
-            padding: 10px;
+        .btn-deletar {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 6px 12px;
             border-radius: 5px;
-            margin-top: 10px;
-            color: #555;
-            font-size: 0.9em;
-            font-style: italic;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.3s;
+            margin-right: 5px;
+        }
+
+        .btn-deletar:hover {
+            background: #d32f2f;
+            transform: scale(1.05);
+        }
+
+        .btn-anexar {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.3s;
+        }
+
+        .btn-anexar:hover {
+            background: #388e3c;
+            transform: scale(1.05);
         }
 
         .empty-state {
@@ -329,8 +371,8 @@
             <!-- Loading -->
             <div id="loading" class="loading">Carregando doações...</div>
 
-            <!-- Lista de Doações -->
-            <ul class="lista-doacoes" id="listaDoacoes"></ul>
+            <!-- Tabela de Doações -->
+            <div id="tabelaContainer"></div>
 
             <!-- Estado Vazio -->
             <div id="emptyState" class="empty-state" style="display: none;">
@@ -352,6 +394,7 @@
         // Configuração do Supabase
         const SUPABASE_URL = 'https://fwmlimudntlrkeukvyjg.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_gx8_WdV2x6n9FoZooniJCQ_s0hWGsiW';
+        const SENHA_ADMIN = '0016275784390';
         const supabaseDB = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let doacoes = [];
@@ -464,20 +507,20 @@
             document.getElementById('loading').style.display = 'none';
         }
 
-        // Renderizar doações
+        // Renderizar tabela de doações
         function renderizarDoacoes(doacoesFiltradas) {
-            const lista = document.getElementById('listaDoacoes');
+            const container = document.getElementById('tabelaContainer');
             const emptyState = document.getElementById('emptyState');
 
             if (doacoesFiltradas.length === 0) {
-                lista.innerHTML = '';
+                container.innerHTML = '';
                 emptyState.style.display = 'block';
                 return;
             }
 
             emptyState.style.display = 'none';
 
-            const html = doacoesFiltradas.map(doacao => {
+            const linhas = doacoesFiltradas.map(doacao => {
                 const data = new Date(doacao.criado_em);
                 const dataFormatada = data.toLocaleDateString('pt-BR', {
                     day: '2-digit',
@@ -485,41 +528,98 @@
                     year: 'numeric'
                 });
 
-                const horario = data.toLocaleTimeString('pt-BR', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-
                 const quantidade = parseInt(doacao.quantidade) || 0;
                 const textoQuantidade = quantidade === 1 ? '1 cesta' : `${quantidade} cestas`;
                 
                 const valor = parseFloat(doacao.valor) || 0;
-                const valorFormatado = valor > 0 ? `R$ ${valor.toFixed(2).replace('.', ',')}` : null;
+                const valorFormatado = valor > 0 ? `R$ ${valor.toFixed(2).replace('.', ',')}` : '-';
 
+                const telefone = doacao.telefone || '-';
+                
                 // Ícone de anexo
                 const temAnexo = doacao.anexo_url && doacao.anexo_url.trim() !== '';
                 const iconAnexo = temAnexo 
-                    ? `<span style="cursor: pointer; color: #FF9800; font-size: 1.2em;" onclick="visualizarAnexo('${doacao.anexo_url}', '${doacao.anexo_nome || 'Comprovante'}')">📎</span>` 
+                    ? `<span class="icon-anexo tem-anexo" onclick="visualizarAnexo('${doacao.anexo_url}', '${doacao.anexo_nome || 'Comprovante'}')">📎</span>` 
+                    : `<span class="icon-anexo sem-anexo">📎</span>`;
+
+                // Observação como subtítulo
+                const observacaoHtml = doacao.observacao 
+                    ? `<div class="observacao">"${doacao.observacao}"</div>` 
                     : '';
-                const btnAnexo = `<button style="margin-top: 8px; padding: 6px 12px; background: #4caf50; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 0.85em;" onclick="anexarComprovante(${doacao.id}, 'doacao')">📎 ${temAnexo ? 'Substituir' : 'Anexar'} Comprovante</button>`;
 
                 return `
-                    <li class="doacao-item">
-                        <div class="doacao-header">
-                            <div class="doacao-numero">Recibo: ${doacao.numero_recibo} ${iconAnexo}</div>
-                            <div class="doacao-data">${dataFormatada} às ${horario}</div>
-                        </div>
-                        <div class="doacao-doador">🙏 ${doacao.doador_nome}</div>
-                        <div class="doacao-quantidade">🛒 ${textoQuantidade}</div>
-                        ${valorFormatado ? `<div class="doacao-valor">💵 ${valorFormatado}</div>` : ''}
-                        ${doacao.telefone ? `<div class="doacao-telefone">📱 ${doacao.telefone}</div>` : ''}
-                        ${doacao.observacao ? `<div class="doacao-observacao">"${doacao.observacao}"</div>` : ''}
-                        ${btnAnexo}
-                    </li>
+                    <tr>
+                        <td style="white-space: nowrap;">${dataFormatada}</td>
+                        <td style="white-space: nowrap; font-weight: 600; color: #E65100;">${doacao.numero_recibo}</td>
+                        <td>
+                            <div class="doador-cell">
+                                ${doacao.doador_nome}
+                                ${observacaoHtml}
+                            </div>
+                        </td>
+                        <td class="quantidade-cell">${textoQuantidade}</td>
+                        <td class="valor-cell">${valorFormatado}</td>
+                        <td>${telefone}</td>
+                        <td style="text-align: center;">${iconAnexo}</td>
+                        <td style="white-space: nowrap;">
+                            <button class="btn-deletar" onclick="deletarDoacao(${doacao.id}, '${doacao.numero_recibo}')">🗑️ Deletar</button>
+                            <button class="btn-anexar" onclick="anexarComprovante(${doacao.id}, 'doacao')">+ ${temAnexo ? 'Trocar' : 'Anexar'}</button>
+                        </td>
+                    </tr>
                 `;
             }).join('');
 
-            lista.innerHTML = html;
+            container.innerHTML = `
+                <div class="tabela-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Recibo</th>
+                                <th>Doador</th>
+                                <th>Quantidade</th>
+                                <th>Valor</th>
+                                <th>Telefone</th>
+                                <th style="text-align: center;">📎</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${linhas}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // Deletar doação (com senha de administrador)
+        async function deletarDoacao(id, recibo) {
+            const senha = prompt('🔒 Digite a senha de administrador para deletar:');
+            
+            if (senha !== SENHA_ADMIN) {
+                alert('❌ Senha incorreta! Operação cancelada.');
+                return;
+            }
+
+            if (!confirm(`⚠️ Tem certeza que deseja deletar a doação ${recibo}?\n\nEsta ação não pode ser desfeita.`)) {
+                return;
+            }
+
+            try {
+                const { error } = await supabaseDB
+                    .from('doacoes_sbe')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                alert('✅ Doação deletada com sucesso!');
+                await carregarDoacoes();
+                
+            } catch (error) {
+                console.error('Erro ao deletar doação:', error);
+                alert('❌ Erro ao deletar doação. Por favor, tente novamente.');
+            }
         }
 
         // Visualizar anexo (comprovante)
