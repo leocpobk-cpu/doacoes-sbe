@@ -696,7 +696,7 @@
 
             // Pegar apenas as últimas 10 doações
             // Os dados já vêm ordenados por ID decrescente (mais recentes primeiro)
-            // ID 27 = Doação #1, ID 26 = Doação #2, etc.
+            // Numeração invertida: ID 27 = Doação #10, ID 26 = Doação #9, ..., ID 18 = Doação #1
             const ultimas10 = doacoes.slice(0, 10);
 
             ultimas10.forEach((doacao, index) => {
@@ -712,9 +712,12 @@
                     valorDisplay = `R$ ${valor.toFixed(2).replace('.', ',')}`;
                 }
 
-                // Formato simples: Doação #1 .............. R$ 10,00
+                // Numeração invertida: mais recente = #10, mais antigo = #1
+                const numeroDoacao = ultimas10.length - index;
+
+                // Formato simples: Doação #10 .............. R$ 10,00
                 li.innerHTML = `
-                    <span class="doacao-numero-simples">Doação #${index + 1}</span>
+                    <span class="doacao-numero-simples">Doação #${numeroDoacao}</span>
                     <span class="doacao-pontos"></span>
                     <span class="doacao-valor-simples">${valorDisplay}</span>
                 `;
