@@ -253,6 +253,93 @@
             background: #d32f2f;
         }
 
+        .input-file {
+            padding: 8px;
+            border: 2px dashed #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            width: 100%;
+        }
+
+        .input-file:hover {
+            border-color: #FF9800;
+        }
+
+        .icon-anexo {
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .icon-anexo.tem-anexo {
+            color: #FF9800;
+            opacity: 1;
+        }
+
+        .icon-anexo.sem-anexo {
+            color: #ccc;
+            opacity: 0.4;
+        }
+
+        .icon-anexo.tem-anexo:hover {
+            transform: scale(1.2);
+        }
+
+        .btn-visualizar-anexo {
+            padding: 3px 8px;
+            background: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75em;
+            margin-left: 5px;
+        }
+
+        .btn-visualizar-anexo:hover {
+            background: #1976d2;
+        }
+
+        .modal-anexo {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+        }
+
+        .modal-anexo-content {
+            position: relative;
+            margin: 5% auto;
+            max-width: 90%;
+            max-height: 80%;
+        }
+
+        .modal-anexo-content img {
+            max-width: 100%;
+            max-height: 80vh;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 25px;
+            color: #fff;
+            font-size: 35px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .modal-close:hover {
+            color: #FF9800;
+        }
+
         .card.total .valor {
             color: #4caf50;
         }
@@ -562,6 +649,11 @@
                         <label>Observação (opcional)</label>
                         <textarea id="observacaoSaida" rows="2" placeholder="Informações adicionais..."></textarea>
                     </div>
+                    <div class="form-group">
+                        <label>📎 Anexar Comprovante (opcional)</label>
+                        <input type="file" id="anexoSaida" accept="image/*,.pdf" class="input-file">
+                        <small style="color: #666; font-size: 0.85em;">Aceita imagens e PDF (máx 5MB)</small>
+                    </div>
                     <button type="submit" class="btn-registrar">✅ Registrar Saída</button>
                 </form>
             </div>
@@ -572,11 +664,6 @@
                 <div id="loadingExtrato" class="loading">Carregando extrato...</div>
                 <div id="extratoContainer"></div>
             </div>
-
-            <!-- Lista de Doações -->
-            <h2 class="section-title">📋 Histórico Completo de Doações</h2>
-            <div id="loadingDoacoes" class="loading">Carregando doações...</div>
-            <ul class="lista-doacoes" id="listaDoacoes"></ul>
         </div>
     </div>
 
@@ -648,48 +735,6 @@
         }
 
         // Registrar saída
-        async function registrarSaida(event) {
-            event.preventDefault();
-
-            const mes = parseInt(document.getElementById('mesSelect').value);
-            const ano = parseInt(document.getElementById('anoSelect').value);
-
-            if (!mes || !ano) {
-                alert('⚠️ Selecione o mês e ano antes de registrar uma saída!');
-                return;
-            }
-
-            const saida = {
-                numero_documento: document.getElementById('numeroDocumento').value,
-                descricao: document.getElementById('descricaoSaida').value,
-                valor: parseFloat(document.getElementById('valorSaida').value),
-                categoria: document.getElementById('categoriaSaida').value,
-                observacao: document.getElementById('observacaoSaida').value || null,
-                ano: ano,
-                mes: mes,
-                criado_em: new Date().toISOString()
-            };
-
-            try {
-                const { data, error } = await supabaseDB
-                    .from('saidas_sbe')
-                    .insert([saida])
-                    .select();
-
-                if (error) {
-                    alert('❌ Erro ao registrar saída: ' + error.message);
-                } else {
-                    alert('✅ Saída registrada com sucesso!');
-                    document.getElementById('formSaida').reset();
-                    await carregarSaidas();
-                    await atualizarSaldoMensal(ano, mes);
-                    atualizarExtratoMensal();
-                }
-            } catch (error) {
-                alert('❌ Erro: ' + error.message);
-            }
-        }
-
         // Deletar saída (com proteção por senha)
         async function deletarSaida(id) {
             const senha = prompt('🔒 Digite a senha de administrador para deletar:');
@@ -940,6 +985,7 @@
                                 <th style="text-align: right; width: 100px;">Entrada</th>
                                 <th style="text-align: right; width: 100px;">Saída</th>
                                 <th style="text-align: right; width: 110px;">Saldo</th>
+                                <th style="text-align: center; width: 50px;">📎</th>
                                 <th style="text-align: center; width: 100px;">Ações</th>
                             </tr>
                         </thead>
@@ -949,8 +995,9 @@
             // Linha de saldo inicial
             html += `
                 <tr class="extrato-saldo">
-                    <td colspan="5"><strong>SALDO INICIAL DO MÊS</strong></td>
+                    <td colspan="6"><strong>SALDO INICIAL DO MÊS</strong></td>
                     <td style="text-align: right;"><strong>R$ ${saldoInicial.toFixed(2).replace('.', ',')}</strong></td>
+                    <td></td>
                     <td></td>
                 </tr>
             `;
@@ -966,6 +1013,16 @@
                 const entrada = t.tipo === 'entrada' ? `<span class="extrato-entrada">R$ ${t.valor.toFixed(2).replace('.', ',')}</span>` : '-';
                 const saida = t.tipo === 'saida' ? `<span class="extrato-saida">R$ ${t.valor.toFixed(2).replace('.', ',')}</span>` : '-';
                 const btnDeletar = t.tipo === 'saida' ? `<button class="btn-deletar" onclick="deletarSaida(${t.id})" title="Deletar esta saída">🗑️</button>` : '';
+                
+                // Ícone de anexo
+                const temAnexo = t.anexo_url && t.anexo_url.trim() !== '';
+                const iconClass = temAnexo ? 'tem-anexo' : 'sem-anexo';
+                const iconTitle = temAnexo ? 'Clique para visualizar o comprovante' : 'Sem comprovante anexado';
+                const iconClick = temAnexo ? `onclick="visualizarAnexo('${t.anexo_url}', '${t.anexo_nome || 'Comprovante'}')"` : '';
+                const iconAnexo = `<span class="icon-anexo ${iconClass}" title="${iconTitle}" ${iconClick}>📎</span>`;
+                
+                // Botão de upload se for saída
+                const btnUpload = t.tipo === 'saida' && !temAnexo ? `<button class="btn-visualizar-anexo" onclick="anexarComprovante(${t.id}, 'saida')" title="Anexar comprovante">📎</button>` : '';
 
                 html += `
                     <tr>
@@ -975,7 +1032,8 @@
                         <td style="text-align: right;">${entrada}</td>
                         <td style="text-align: right;">${saida}</td>
                         <td style="text-align: right;">R$ ${t.saldo.toFixed(2).replace('.', ',')}</td>
-                        <td style="text-align: center;">${btnDeletar}</td>
+                        <td style="text-align: center;">${iconAnexo}</td>
+                        <td style="text-align: center;">${btnDeletar}${btnUpload}</td>
                     </tr>
                 `;
             });
@@ -987,6 +1045,7 @@
                     <td style="text-align: right;"><strong class="extrato-entrada">R$ ${totalEntradas.toFixed(2).replace('.', ',')}</strong></td>
                     <td style="text-align: right;"><strong class="extrato-saida">R$ ${totalSaidas.toFixed(2).replace('.', ',')}</strong></td>
                     <td style="text-align: right;"><strong>R$ ${saldoFinalCalculado.toFixed(2).replace('.', ',')}</strong></td>
+                    <td></td>
                     <td></td>
                 </tr>
             `;
@@ -1383,6 +1442,265 @@
             doc.save(nomeArquivo);
         }
 
+        // Visualizar anexo (comprovante)
+        function visualizarAnexo(url, nome) {
+            const modal = document.getElementById('modalAnexo');
+            const imagem = document.getElementById('imagemAnexo');
+            const iframe = document.getElementById('pdfAnexo');
+            const titulo = document.getElementById('tituloModalAnexo');
+            
+            titulo.textContent = nome || 'Comprovante';
+            
+            // Verificar se é PDF ou imagem
+            if (url.toLowerCase().endsWith('.pdf')) {
+                imagem.style.display = 'none';
+                iframe.style.display = 'block';
+                iframe.src = url;
+            } else {
+                iframe.style.display = 'none';
+                imagem.style.display = 'block';
+                imagem.src = url;
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        // Fechar modal de anexo
+        function fecharModalAnexo() {
+            const modal = document.getElementById('modalAnexo');
+            const imagem = document.getElementById('imagemAnexo');
+            const iframe = document.getElementById('pdfAnexo');
+            
+            modal.style.display = 'none';
+            imagem.src = '';
+            iframe.src = '';
+        }
+
+        // Anexar comprovante a uma saída existente
+        let saidaAtualParaAnexo = null;
+        
+        async function anexarComprovante(saidaId, tipo) {
+            saidaAtualParaAnexo = { id: saidaId, tipo: tipo };
+            
+            // Criar input file temporário
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*,.pdf';
+            
+            input.onchange = async (e) => {
+                const arquivo = e.target.files[0];
+                if (!arquivo) return;
+                
+                // Validar tamanho (5MB)
+                if (arquivo.size > 5 * 1024 * 1024) {
+                    alert('Arquivo muito grande! O tamanho máximo é 5MB.');
+                    return;
+                }
+                
+                try {
+                    // Mostrar loading
+                    const btnUpload = event.target;
+                    btnUpload.disabled = true;
+                    btnUpload.textContent = '⏳';
+                    
+                    // Fazer upload para Supabase Storage
+                    const nomeArquivo = `${Date.now()}_${arquivo.name}`;
+                    const caminhoArquivo = `${saidaAtualParaAnexo.tipo}/${saidaAtualParaAnexo.id}/${nomeArquivo}`;
+                    
+                    const { data: uploadData, error: uploadError } = await supabaseDB.storage
+                        .from('anexos-sbe')
+                        .upload(caminhoArquivo, arquivo);
+                    
+                    if (uploadError) {
+                        // Se o bucket não existe, criar
+                        if (uploadError.message.includes('not found')) {
+                            const { error: bucketError } = await supabaseDB.storage.createBucket('anexos-sbe', {
+                                public: true
+                            });
+                            
+                            if (bucketError) throw bucketError;
+                            
+                            // Tentar upload novamente
+                            const { data: retryData, error: retryError } = await supabaseDB.storage
+                                .from('anexos-sbe')
+                                .upload(caminhoArquivo, arquivo);
+                            
+                            if (retryError) throw retryError;
+                        } else {
+                            throw uploadError;
+                        }
+                    }
+                    
+                    // Obter URL pública
+                    const { data: urlData } = supabaseDB.storage
+                        .from('anexos-sbe')
+                        .getPublicUrl(caminhoArquivo);
+                    
+                    const anexoUrl = urlData.publicUrl;
+                    
+                    // Atualizar registro no banco
+                    const { error: updateError } = await supabaseDB
+                        .from(`${saidaAtualParaAnexo.tipo}s_sbe`)
+                        .update({
+                            anexo_url: anexoUrl,
+                            anexo_nome: arquivo.name
+                        })
+                        .eq('id', saidaAtualParaAnexo.id);
+                    
+                    if (updateError) throw updateError;
+                    
+                    alert('✅ Comprovante anexado com sucesso!');
+                    
+                    // Recarregar dados
+                    if (saidaAtualParaAnexo.tipo === 'saida') {
+                        await carregarSaidas();
+                    } else {
+                        await carregarDoacoes();
+                    }
+                    atualizarExtratoMensal();
+                    
+                } catch (error) {
+                    console.error('Erro ao anexar comprovante:', error);
+                    alert('❌ Erro ao anexar comprovante. Por favor, tente novamente.');
+                    btnUpload.disabled = false;
+                    btnUpload.textContent = '📎';
+                }
+            };
+            
+            input.click();
+        }
+
+        // Modificar registrarSaida para incluir anexo
+        async function registrarSaida(e) {
+            e.preventDefault();
+
+            const mes = parseInt(document.getElementById('mesSelect').value);
+            const ano = parseInt(document.getElementById('anoSelect').value);
+
+            if (!mes || !ano) {
+                alert('⚠️ Selecione o mês e ano antes de registrar uma saída!');
+                return;
+            }
+
+            const numero_documento = document.getElementById('numeroDocumento').value;
+            const descricao = document.getElementById('descricaoSaida').value;
+            const valor = parseFloat(document.getElementById('valorSaida').value);
+            const categoria = document.getElementById('categoriaSaida').value;
+            const observacao = document.getElementById('observacaoSaida').value || null;
+            const arquivoAnexo = document.getElementById('anexoSaida').files[0];
+
+            if (!numero_documento || !descricao || !valor || !categoria) {
+                alert('Por favor, preencha todos os campos obrigatórios.');
+                return;
+            }
+
+            try {
+                let anexoUrl = null;
+                let anexoNome = null;
+
+                // Se houver arquivo, fazer upload primeiro
+                if (arquivoAnexo) {
+                    // Validar tamanho
+                    if (arquivoAnexo.size > 5 * 1024 * 1024) {
+                        alert('Arquivo muito grande! O tamanho máximo é 5MB.');
+                        return;
+                    }
+
+                    const nomeArquivo = `${Date.now()}_${arquivoAnexo.name}`;
+                    const caminhoArquivo = `saida/temp_${nomeArquivo}`;
+
+                    const { data: uploadData, error: uploadError } = await supabaseDB.storage
+                        .from('anexos-sbe')
+                        .upload(caminhoArquivo, arquivoAnexo);
+
+                    if (uploadError) {
+                        // Se o bucket não existe, criar
+                        if (uploadError.message.includes('not found')) {
+                            const { error: bucketError } = await supabaseDB.storage.createBucket('anexos-sbe', {
+                                public: true
+                            });
+                            
+                            if (!bucketError) {
+                                // Tentar upload novamente
+                                const { error: retryError } = await supabaseDB.storage
+                                    .from('anexos-sbe')
+                                    .upload(caminhoArquivo, arquivoAnexo);
+                                
+                                if (retryError) throw retryError;
+                            }
+                        } else {
+                            throw uploadError;
+                        }
+                    }
+
+                    // Obter URL pública
+                    const { data: urlData } = supabaseDB.storage
+                        .from('anexos-sbe')
+                        .getPublicUrl(caminhoArquivo);
+
+                    anexoUrl = urlData.publicUrl;
+                    anexoNome = arquivoAnexo.name;
+                }
+
+                // Inserir no banco
+                const { data, error } = await supabaseDB
+                    .from('saidas_sbe')
+                    .insert([{
+                        numero_documento,
+                        descricao,
+                        valor,
+                        ano,
+                        mes,
+                        categoria,
+                        observacao,
+                        anexo_url: anexoUrl,
+                        anexo_nome: anexoNome
+                    }])
+                    .select();
+
+                if (error) throw error;
+
+                // Se houver anexo, renomear no storage com o ID correto
+                if (arquivoAnexo && data && data[0]) {
+                    const saidaId = data[0].id;
+                    const nomeArquivoNovo = `${Date.now()}_${arquivoAnexo.name}`;
+                    const caminhoNovo = `saida/${saidaId}/${nomeArquivoNovo}`;
+                    const caminhoAntigo = `saida/temp_${Date.now()}_${arquivoAnexo.name}`;
+
+                    // Fazer novo upload com caminho correto
+                    await supabaseDB.storage
+                        .from('anexos-sbe')
+                        .upload(caminhoNovo, arquivoAnexo);
+
+                    // Obter nova URL
+                    const { data: urlData } = supabaseDB.storage
+                        .from('anexos-sbe')
+                        .getPublicUrl(caminhoNovo);
+
+                    // Atualizar registro
+                    await supabaseDB
+                        .from('saidas_sbe')
+                        .update({ anexo_url: urlData.publicUrl })
+                        .eq('id', saidaId);
+
+                    // Deletar arquivo temporário (opcional)
+                    await supabaseDB.storage
+                        .from('anexos-sbe')
+                        .remove([caminhoAntigo]);
+                }
+
+                alert('✅ Saída registrada com sucesso!');
+                document.getElementById('formSaida').reset();
+                await carregarSaidas();
+                await atualizarSaldoMensal(ano, mes);
+                atualizarExtratoMensal();
+
+            } catch (error) {
+                console.error('Erro ao registrar saída:', error);
+                alert('❌ Erro ao registrar saída. Verifique o console para mais detalhes.');
+            }
+        }
+
         // Inicializar aplicação
         async function inicializar() {
             preencherSeletores();
@@ -1398,5 +1716,16 @@
         // Executar inicialização quando a página carregar
         inicializar();
     </script>
+
+    <!-- Modal para visualizar anexos -->
+    <div id="modalAnexo" class="modal-anexo" onclick="if(event.target.id === 'modalAnexo') fecharModalAnexo()">
+        <div class="modal-anexo-content">
+            <button class="modal-close" onclick="fecharModalAnexo()">&times;</button>
+            <h3 id="tituloModalAnexo" style="color: white; text-align: center; margin-bottom: 20px;">Comprovante</h3>
+            <img id="imagemAnexo" src="" style="max-width: 90%; max-height: 80vh; display: none;">
+            <iframe id="pdfAnexo" src="" style="width: 90%; height: 80vh; border: none; display: none;"></iframe>
+        </div>
+    </div>
+
 </body>
 </html>
