@@ -885,6 +885,8 @@
                     valor: parseFloat(s.valor),
                     documento: s.numero_documento,
                     observacao: s.observacao,
+                    anexo_url: s.anexo_url,
+                    anexo_nome: s.anexo_nome,
                     id: s.id
                 });
             });
@@ -935,7 +937,7 @@
             // Linha de saldo inicial
             html += `
                 <tr class="extrato-saldo">
-                    <td colspan="6"><strong>SALDO INICIAL DO MÊS</strong></td>
+                    <td colspan="5"><strong>SALDO INICIAL DO MÊS</strong></td>
                     <td style="text-align: right;"><strong>R$ ${saldoInicial.toFixed(2).replace('.', ',')}</strong></td>
                     <td></td>
                     <td></td>
