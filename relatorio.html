@@ -1323,10 +1323,6 @@
             yPos += 6;
             doc.text(`Total arrecadado: R$ ${totalDinheiro.toFixed(2).replace('.', ',')}`, 18, yPos);
             yPos += 8;
-            doc.text(`Doações de cestas básicas: ${doacoesCestas.length}`, 18, yPos);
-            yPos += 6;
-            doc.text(`Total de cestas: ${totalCestas} unidade${totalCestas !== 1 ? 's' : ''}`, 18, yPos);
-            yPos += 8;
             doc.text(`Total de saidas registradas: ${saidasMes.length}`, 18, yPos);
             yPos += 6;
             doc.text(`Total gasto: R$ ${totalSaidas.toFixed(2).replace('.', ',')}`, 18, yPos);
